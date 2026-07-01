@@ -1,0 +1,29 @@
+# Raw data — never commit datasets (see data/README.md for licenses/access)
+data/**
+!data/README.md
+!data/.gitkeep
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.ipynb_checkpoints/
+.pytest_cache/
+.venv/
+venv/
+
+# Results/figures are regenerated; keep dirs, ignore bulky binaries
+results/**
+!results/.gitkeep
+!results/*.csv
+!results/*.json
+figures/**
+!figures/.gitkeep
+!figures/*.png
+!figures/*.pdf
+
+# OS
+.DS_Store

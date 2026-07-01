@@ -1,0 +1,9 @@
+# Pinned at project start (2026). See environment.yml for the conda spec.
+numpy==1.26.4
+scipy==1.13.1
+pandas==2.2.2
+scikit-learn==1.5.1
+matplotlib==3.9.1
+neurokit2==0.2.10
+pyyaml==6.0.1
+pytest==8.3.2

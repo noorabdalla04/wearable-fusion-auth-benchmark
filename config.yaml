@@ -1,0 +1,12 @@
+# Global experiment configuration. All scripts read from here.
+seed: 20260101
+window_seconds: 5        # fast-auth window length (few seconds)
+sampling:
+  resample_hz: null      # set per-dataset in loader if needed
+evaluation:
+  metric: [eer, auc]
+  split: subject_wise    # never record-wise: no subject in both train and test
+paths:
+  data_root: data
+  results_root: results
+  figures_root: figures
