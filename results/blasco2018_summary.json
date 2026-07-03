@@ -1,0 +1,38 @@
+{
+  "name": "blasco2018",
+  "n_recordings": 75,
+  "n_subjects": 25,
+  "sessions": [
+    "rest_after_stroll",
+    "rest_seated",
+    "walking"
+  ],
+  "conditions": [
+    "rest_after_stroll",
+    "rest_seated",
+    "walking"
+  ],
+  "channel_coverage": {
+    "ECG": 75,
+    "GSR": 75,
+    "PPG": 75
+  },
+  "fs": [
+    100.0
+  ],
+  "duration_s_stats": {
+    "min": 173.0,
+    "max": 368.4,
+    "mean": 265.584,
+    "median": 296.0
+  },
+  "age_stats": {
+    "min": 18,
+    "max": 42,
+    "mean": 28.1
+  },
+  "sex_counts": {
+    "Male": 16,
+    "Female": 9
+  }
+}

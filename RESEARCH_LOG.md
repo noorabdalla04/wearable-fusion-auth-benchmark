@@ -41,6 +41,37 @@ version.
 
 ---
 
+---
+
+## 2026 — Phase 2: Blasco data acquired, schema + loader built
+
+**Download.** Blasco dataset fetched from the Dropbox link cited in the paper
+(`LowCostSensorsBiometrics.zip`, 5.7 MB, sha256 `59537950e36f…`). CC BY 4.0.
+
+**Verified format (from the authors' own MATLAB `generate_dataset_original.m`, not
+guessed).** 100 Hz; columns are **PPG, GSR, ECG**, then a near-constant reference
+column and two zero columns. Directory `1/2/3` = activity states rest / walking /
+rest-after-stroll. Subject = UUID, stable across states.
+
+**Honest finding worth flagging: there is NO usable accelerometer in the released
+data.** Columns 4–6 are constant/zero. The paper's abstract lists ACC among the
+sensors, but the released fusion signals are PPG/ECG/GSR only (matching the paper's
+best config, ECG+PPG+GSR). So for the Blasco anchor, our "multi-signal fusion" is
+**PPG+ECG+GSR**, not PPG+ACC. ACC-based fusion will have to come from PPG-DaLiA / PTT-PPG.
+
+**Loader validated against the paper.** Loading into the common schema yields exactly
+25 subjects × 3 states = 75 recordings, PPG/ECG/GSR at 100 Hz, ages 18–42 (mean 28.1),
+16M/9F — matches the paper's stated "16 males and 9 females, average 28.2, median 27".
+This subject-demographics match is our evidence the loader reads the data correctly.
+See `results/blasco2018_summary.json`. 6/6 unit tests pass.
+
+**Schema design.** One `Recording` = one subject × one session/condition × time-aligned
+signals at a common `fs`. `session_id` is the axis the evaluation harness splits on
+(within- vs cross-session); `condition` is kept separate so cross-activity and cross-day
+are distinguishable. This is the reusable, data-source-agnostic core.
+
+---
+
 ### Open questions being carried forward
 - Cross-DAY data is the weak link: the multi-signal sets are single-day. Plan uses
   Blasco's 3 activity states as a cross-condition proxy, plus PhysioNet Exam-Stress
