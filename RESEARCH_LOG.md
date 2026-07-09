@@ -72,6 +72,42 @@ are distinguishable. This is the reusable, data-source-agnostic core.
 
 ---
 
+---
+
+## 2026 — Phase 3: signal processing + features (with two honest course-corrections)
+
+**Pipeline.** load → clean (neurokit2 ppg_clean/ecg_clean; GSR low-pass) → segment into
+5 s non-overlapping windows (drop first for settling) → per-channel quality flags →
+per-signal features. 5 s = the fast-auth "glance" window.
+
+**Features (signal-shape only, no identity).** PPG/ECG: heart rate, IBI std, RMSSD,
+average-beat morphology (amplitude, width, up-slope), spectral band energy, skew/kurt.
+GSR: tonic mean/std/range/slope. ACC: magnitude stats + band energy (when present).
+26 features on Blasco (PPG+ECG+GSR).
+
+**Course-correction #1 — retention rule.** First build required ALL channels good per
+window, which silently dropped 3 subjects whose GSR electrode was dead the whole
+recording — throwing away their perfectly good PPG/ECG. Fixed: keep a window if at
+least one cardiac channel (PPG or ECG) is good, and record per-channel `ok_<CH>` flags
+so the evaluation harness filters per signal-combination. Result: all 25 subjects
+retained, 3871 windows. Per-channel good-rates: **PPG 100%, ECG 94.8%, GSR 84.1%** —
+GSR is the weak sensor, and that is now visible rather than hidden.
+
+**Course-correction #2 — leakage-audit false positive.** The audit's banned-substring
+check flagged `ppg_width_mean`/`ecg_width_mean` because "width" contains "id". Fixed to
+token-boundary matching. Audit now passes: no leaky names, window_index excluded from
+features, no zero-variance or suspicious features.
+
+**Leakage audit result (passes).** Top single-feature subject separability is `gsr_mean`
+(ANOVA F≈1057) — physiologically real (baseline skin conductance differs between
+people), not an artefact; no feature exceeds 20× the 90th-percentile F, so nothing looks
+like a hidden recording-id. 11/11 tests pass.
+
+**Artefacts.** `results/blasco2018_features.parquet` (frozen feature matrix, checkpoint),
+`results/blasco2018_feature_qa.json`.
+
+---
+
 ### Open questions being carried forward
 - Cross-DAY data is the weak link: the multi-signal sets are single-day. Plan uses
   Blasco's 3 activity states as a cross-condition proxy, plus PhysioNet Exam-Stress
