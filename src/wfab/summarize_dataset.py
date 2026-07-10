@@ -16,9 +16,9 @@ import numpy as np
 import pandas as pd
 
 from .repro import REPO_ROOT, get_logger
-from .loaders import blasco2018
+from .loaders import blasco2018, exam_stress
 
-_LOADERS = {"blasco2018": blasco2018.load}
+_LOADERS = {"blasco2018": blasco2018.load, "exam_stress": exam_stress.load}
 log = get_logger(__name__)
 
 

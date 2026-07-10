@@ -17,9 +17,9 @@ import pandas as pd
 from .repro import REPO_ROOT, get_logger, load_config
 from .preprocess import clean_recording, segment_recording
 from .features import extract_window
-from .loaders import blasco2018
+from .loaders import blasco2018, exam_stress
 
-_LOADERS = {"blasco2018": blasco2018.load}
+_LOADERS = {"blasco2018": blasco2018.load, "exam_stress": exam_stress.load}
 LABEL_COLS = ["dataset", "subject_id", "session_id", "condition", "window_index"]
 log = get_logger(__name__)
 
@@ -30,7 +30,9 @@ def feature_columns(df: pd.DataFrame) -> list[str]:
 
 
 def build(dataset_name: str, data_root: str | Path,
-          window_seconds: float | None = None) -> pd.DataFrame:
+          window_seconds: float | None = None,
+          max_windows_per_recording: int | None = None,
+          seed: int = 0) -> pd.DataFrame:
     """Build the feature matrix.
 
     Retention rule: a window is kept if AT LEAST ONE cardiac channel (PPG or ECG) is
@@ -46,14 +48,21 @@ def build(dataset_name: str, data_root: str | Path,
     load_fn = _LOADERS[dataset_name]
     ds = load_fn(data_root)
 
+    rng = np.random.default_rng(seed)
     rows = []
     n_win = n_kept = 0
     for rec in ds:
         cleaned = clean_recording(rec)
-        for w in segment_recording(cleaned, window_seconds=window_seconds):
+        wins = segment_recording(cleaned, window_seconds=window_seconds)
+        # cap very long recordings by uniform subsampling of windows (keeps whole-session
+        # coverage rather than only the first N minutes)
+        if max_windows_per_recording and len(wins) > max_windows_per_recording:
+            sel = np.sort(rng.choice(len(wins), max_windows_per_recording, replace=False))
+            wins = [wins[i] for i in sel]
+        for w in wins:
             n_win += 1
             ok = {ch: w.quality.get(ch, {}).get("ok", True) for ch in w.signals}
-            # keep if at least one cardiac channel is good
+            # keep if at least one cardiac channel is good (PPG or ECG)
             if not (ok.get("PPG", False) or ok.get("ECG", False)):
                 continue
             n_kept += 1
@@ -80,7 +89,8 @@ if __name__ == "__main__":
     import sys
     name = sys.argv[1] if len(sys.argv) > 1 else "blasco2018"
     root = sys.argv[2] if len(sys.argv) > 2 else f"data/{name}"
-    df = build(name, root)
+    cap = int(sys.argv[3]) if len(sys.argv) > 3 else None
+    df = build(name, root, max_windows_per_recording=cap, seed=load_config()["seed"])
     p = save(df, name)
     feat_cols = feature_columns(df)
     print(f"saved {p.name}: {df.shape[0]} windows x {len(feat_cols)} features")

@@ -156,6 +156,53 @@ cross-ACTIVITY, not cross-DAY. The true cross-day test needs PhysioNet Exam-Stre
 
 ---
 
+---
+
+## 2026 — Phase 5: second dataset (Exam-Stress) + the TRUE cross-day test
+
+**Schema validated on a second, very different dataset.** PhysioNet Wearable Exam-Stress
+(Empatica E4 wrist): 10 subjects × 3 exams on DIFFERENT days (Midterm 1/2, Final) =
+genuine cross-DAY axis. Different device, different signals (PPG+ACC+GSR, NO ECG),
+different native rates (BVP 64 / ACC 32 / EDA 4 Hz) — all mapped into the common schema
+with zero change to downstream code by resampling to a shared 64 Hz grid. 30 recordings,
+all 10 subjects in all 3 sessions. License ODC-By. This is the payoff of the
+data-source-agnostic design. Blasco (PPG+ECG+GSR) and Exam-Stress (PPG+ACC+GSR) together
+cover all four signals.
+
+**THE TRUE CROSS-DAY RESULT (RandomForest, Exam-Stress PPG+GSR+ACC):**
+
+| Combination | Within-session EER | Cross-DAY EER |
+|---|---|---|
+| ppg | 0.363 | 0.466 |
+| gsr | 0.200 | 0.353 |
+| acc | 0.273 | 0.363 |
+| gsr+acc | 0.141 | 0.312 |
+| ppg+gsr+acc | 0.147 | 0.339 |
+
+- **Cross-day is worse than cross-activity (Blasco):** best fusion cross-day EER ~0.31–0.34
+  vs Blasco cross-activity ~0.21. Confirms and strengthens the collapse finding: across
+  real days, the system sits near a coin-flip at usable operating points.
+- **Leakage stress test passes:** label-shuffle drives BOTH within (0.143→0.500) and
+  cross-day (0.339→0.501) to exact chance. The residual signal is genuine.
+
+**TWO HONEST CAVEATS (must carry into the paper — do not spin these):**
+1. **Exam-Stress PPG is much weaker than Blasco's even within-session** (0.363 vs 0.084).
+   The E4 wrist BVP over a multi-hour exam is far noisier than Blasco's short controlled
+   recording. So the two datasets' absolute numbers are NOT directly comparable; the
+   *within→cross collapse within each dataset* is the comparable quantity, not the raw EERs.
+2. **Cross-day, PPG is near-useless (0.464 ≈ chance); GSR/ACC carry the residual.** This is
+   a real interpretation risk: ACC "identity" across exam days may reflect behavioural /
+   postural habit rather than physiology, and GSR baseline may be confounded with each
+   exam's stress level rather than stable identity. The cardiac signal — the thing an
+   unlock would actually rely on — is the FIRST to collapse cross-day. This arguably makes
+   the negative finding stronger, but the mechanism must be stated plainly, not sold as
+   "fusion works."
+
+**Artefacts:** `results/exam_stress_benchmark.csv`, `_summary.json`, `_feature_qa.json`
+(QA passes), `_features.parquet` (200 windows/recording cap; recordings are 3–7 h).
+
+---
+
 ### Open questions being carried forward
 - Cross-DAY data is the weak link: the multi-signal sets are single-day. Plan uses
   Blasco's 3 activity states as a cross-condition proxy, plus PhysioNet Exam-Stress

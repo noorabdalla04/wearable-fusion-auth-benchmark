@@ -1,0 +1,29 @@
+{
+  "name": "exam_stress",
+  "n_recordings": 30,
+  "n_subjects": 10,
+  "sessions": [
+    "final",
+    "midterm1",
+    "midterm2"
+  ],
+  "conditions": [
+    "final",
+    "midterm1",
+    "midterm2"
+  ],
+  "channel_coverage": {
+    "ACC": 30,
+    "GSR": 30,
+    "PPG": 30
+  },
+  "fs": [
+    64.0
+  ],
+  "duration_s_stats": {
+    "min": 9961.3,
+    "max": 25820.8,
+    "mean": 14775.773333333329,
+    "median": 12556.15
+  }
+}

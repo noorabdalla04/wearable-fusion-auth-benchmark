@@ -1,0 +1,38 @@
+{
+  "n_windows": 5951,
+  "n_features": 20,
+  "n_subjects": 10,
+  "leaky_feature_names": [],
+  "label_cols_present": [
+    "dataset",
+    "subject_id",
+    "session_id",
+    "condition",
+    "window_index"
+  ],
+  "window_index_in_features": false,
+  "nan_rate_top": {
+    "ppg_hr_mean": 0.023,
+    "ppg_rmssd": 0.023,
+    "ppg_amp_mean": 0.023,
+    "ppg_amp_std": 0.023,
+    "ppg_width_mean": 0.023,
+    "ppg_upslope_mean": 0.023,
+    "ppg_ibi_std": 0.023,
+    "gsr_range": 0.0
+  },
+  "zero_variance_features": [],
+  "top_subject_separating_features_F": {
+    "acc_mean": 102.51,
+    "ppg_amp_mean": 58.29,
+    "ppg_upslope_mean": 57.24,
+    "gsr_mean": 50.06,
+    "ppg_amp_std": 49.12,
+    "ppg_band_hf": 38.6,
+    "ppg_band_lf": 29.11,
+    "gsr_range": 22.78
+  },
+  "separability_p90_F": 57.34,
+  "suspicious_features": [],
+  "passed": true
+}
