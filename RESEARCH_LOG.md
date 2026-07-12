@@ -203,6 +203,41 @@ cover all four signals.
 
 ---
 
+---
+
+## 2026 — Phase 6: fusion verdict + security-bar accounting + robustness
+
+**Does fusion survive cross-session? — MIXED, and reported honestly.**
+- Fusion's advantage *technically* persists cross-session: best fusion beats best single
+  by +0.062 EER (Blasco) / +0.041 (Exam-Stress). So "fusion helps" is literally true.
+- BUT the collapse dominates: within→cross is 14× (Blasco cross-activity) and 2.2×
+  (Exam-Stress cross-day). Absolute cross-session EER (0.20 / 0.31) is unusable regardless
+  of fusion. The correct statement: **fusion gives a small, real edge that does not
+  come close to closing the cross-session gap.**
+- Telling detail: the best cross-session combo is **PPG+GSR** (Blasco) and **GSR+ACC**
+  (Exam-Stress) — the cardiac signal drops out of the optimum cross-session, consistent
+  with cardiac morphology being the first thing to destabilise across sessions.
+
+**Security-bar accounting (the number that ends the "password" framing).**
+At EER, FAR = FRR = EER. Best honest cross-session fusion:
+- Blasco (cross-activity, PPG+GSR): EER 0.199 = **~9,970× worse than Touch ID** (FAR 2e-5),
+  **~199,400× worse than Face ID** (FAR 1e-6).
+- Exam-Stress (cross-DAY, GSR+ACC): EER 0.312 = **~15,600× worse than Touch ID**,
+  **~311,900× worse than Face ID**.
+That is 4–5 orders of magnitude short of a real device unlock.
+
+**Robustness (collapse is not an artefact).**
+- Window-length sweep (Blasco 3/5/10 s): within stays 0.014–0.020, cross stays ~0.21 —
+  collapse holds at every window length.
+- Bootstrap 95% CIs are cleanly non-overlapping: Blasco within [0.006, 0.026] vs cross
+  [0.119, 0.297]; Exam-Stress within [0.134, 0.157] vs cross [0.295, 0.377].
+- Proxy vs true is tagged explicitly everywhere: Blasco cross-session = cross-ACTIVITY
+  (proxy); Exam-Stress cross-session = cross-DAY (true). Never conflated.
+
+**Artefacts:** `results/analysis_phase6.json`, `results/robustness_phase6.json`.
+
+---
+
 ### Open questions being carried forward
 - Cross-DAY data is the weak link: the multi-signal sets are single-day. Plan uses
   Blasco's 3 activity states as a cross-condition proxy, plus PhysioNet Exam-Stress

@@ -1,0 +1,208 @@
+{
+  "fusion_verdict": {
+    "model": "rf",
+    "rows": [
+      {
+        "dataset": "blasco2018",
+        "protocol": "cross_session",
+        "best_combo": "ppg+gsr",
+        "best_eer": 0.1994,
+        "best_single": "ppg",
+        "best_single_eer": 0.2619,
+        "fusion_gain_eer": 0.0625
+      },
+      {
+        "dataset": "blasco2018",
+        "protocol": "within_session",
+        "best_combo": "ppg+ecg+gsr",
+        "best_eer": 0.0142,
+        "best_single": "ppg",
+        "best_single_eer": 0.084,
+        "fusion_gain_eer": 0.0698
+      },
+      {
+        "dataset": "exam_stress",
+        "protocol": "cross_session",
+        "best_combo": "gsr+acc",
+        "best_eer": 0.3119,
+        "best_single": "gsr",
+        "best_single_eer": 0.3528,
+        "fusion_gain_eer": 0.0409
+      },
+      {
+        "dataset": "exam_stress",
+        "protocol": "within_session",
+        "best_combo": "gsr+acc",
+        "best_eer": 0.1413,
+        "best_single": "gsr",
+        "best_single_eer": 0.1997,
+        "fusion_gain_eer": 0.0584
+      }
+    ],
+    "by_dataset": {
+      "blasco2018": {
+        "within_best_eer": 0.0142,
+        "cross_best_eer": 0.1994,
+        "within_fusion_gain": 0.0698,
+        "cross_fusion_gain": 0.0625,
+        "collapse_factor": 14.04,
+        "fusion_advantage_survives": true
+      },
+      "exam_stress": {
+        "within_best_eer": 0.1413,
+        "cross_best_eer": 0.3119,
+        "within_fusion_gain": 0.0584,
+        "cross_fusion_gain": 0.0409,
+        "collapse_factor": 2.21,
+        "fusion_advantage_survives": true
+      }
+    }
+  },
+  "security_accounting": {
+    "model": "rf",
+    "touch_id_far": 2e-05,
+    "face_id_far": 1e-06,
+    "rows": [
+      {
+        "dataset": "blasco2018",
+        "combination": "ecg",
+        "cross_session_eer": 0.3738,
+        "far_at_eer": 0.3738,
+        "x_worse_than_touchid": 18690,
+        "x_worse_than_faceid": 373800,
+        "orders_above_touchid": 4.3,
+        "orders_above_faceid": 5.6
+      },
+      {
+        "dataset": "blasco2018",
+        "combination": "gsr",
+        "cross_session_eer": 0.2954,
+        "far_at_eer": 0.2954,
+        "x_worse_than_touchid": 14770,
+        "x_worse_than_faceid": 295400,
+        "orders_above_touchid": 4.2,
+        "orders_above_faceid": 5.5
+      },
+      {
+        "dataset": "blasco2018",
+        "combination": "ppg",
+        "cross_session_eer": 0.2619,
+        "far_at_eer": 0.2619,
+        "x_worse_than_touchid": 13095,
+        "x_worse_than_faceid": 261900,
+        "orders_above_touchid": 4.1,
+        "orders_above_faceid": 5.4
+      },
+      {
+        "dataset": "blasco2018",
+        "combination": "ecg+gsr",
+        "cross_session_eer": 0.2819,
+        "far_at_eer": 0.2819,
+        "x_worse_than_touchid": 14095,
+        "x_worse_than_faceid": 281900,
+        "orders_above_touchid": 4.1,
+        "orders_above_faceid": 5.5
+      },
+      {
+        "dataset": "blasco2018",
+        "combination": "ppg+ecg",
+        "cross_session_eer": 0.2516,
+        "far_at_eer": 0.2516,
+        "x_worse_than_touchid": 12580,
+        "x_worse_than_faceid": 251600,
+        "orders_above_touchid": 4.1,
+        "orders_above_faceid": 5.4
+      },
+      {
+        "dataset": "blasco2018",
+        "combination": "ppg+gsr",
+        "cross_session_eer": 0.1994,
+        "far_at_eer": 0.1994,
+        "x_worse_than_touchid": 9970,
+        "x_worse_than_faceid": 199400,
+        "orders_above_touchid": 4.0,
+        "orders_above_faceid": 5.3
+      },
+      {
+        "dataset": "blasco2018",
+        "combination": "ppg+ecg+gsr",
+        "cross_session_eer": 0.2101,
+        "far_at_eer": 0.2101,
+        "x_worse_than_touchid": 10505,
+        "x_worse_than_faceid": 210100,
+        "orders_above_touchid": 4.0,
+        "orders_above_faceid": 5.3
+      },
+      {
+        "dataset": "exam_stress",
+        "combination": "acc",
+        "cross_session_eer": 0.3633,
+        "far_at_eer": 0.3633,
+        "x_worse_than_touchid": 18165,
+        "x_worse_than_faceid": 363300,
+        "orders_above_touchid": 4.3,
+        "orders_above_faceid": 5.6
+      },
+      {
+        "dataset": "exam_stress",
+        "combination": "gsr",
+        "cross_session_eer": 0.3528,
+        "far_at_eer": 0.3528,
+        "x_worse_than_touchid": 17640,
+        "x_worse_than_faceid": 352800,
+        "orders_above_touchid": 4.2,
+        "orders_above_faceid": 5.5
+      },
+      {
+        "dataset": "exam_stress",
+        "combination": "ppg",
+        "cross_session_eer": 0.4665,
+        "far_at_eer": 0.4665,
+        "x_worse_than_touchid": 23325,
+        "x_worse_than_faceid": 466500,
+        "orders_above_touchid": 4.4,
+        "orders_above_faceid": 5.7
+      },
+      {
+        "dataset": "exam_stress",
+        "combination": "gsr+acc",
+        "cross_session_eer": 0.3119,
+        "far_at_eer": 0.3119,
+        "x_worse_than_touchid": 15595,
+        "x_worse_than_faceid": 311900,
+        "orders_above_touchid": 4.2,
+        "orders_above_faceid": 5.5
+      },
+      {
+        "dataset": "exam_stress",
+        "combination": "ppg+acc",
+        "cross_session_eer": 0.4016,
+        "far_at_eer": 0.4016,
+        "x_worse_than_touchid": 20080,
+        "x_worse_than_faceid": 401600,
+        "orders_above_touchid": 4.3,
+        "orders_above_faceid": 5.6
+      },
+      {
+        "dataset": "exam_stress",
+        "combination": "ppg+gsr",
+        "cross_session_eer": 0.3645,
+        "far_at_eer": 0.3645,
+        "x_worse_than_touchid": 18225,
+        "x_worse_than_faceid": 364500,
+        "orders_above_touchid": 4.3,
+        "orders_above_faceid": 5.6
+      },
+      {
+        "dataset": "exam_stress",
+        "combination": "ppg+gsr+acc",
+        "cross_session_eer": 0.3388,
+        "far_at_eer": 0.3388,
+        "x_worse_than_touchid": 16940,
+        "x_worse_than_faceid": 338800,
+        "orders_above_touchid": 4.2,
+        "orders_above_faceid": 5.5
+      }
+    ]
+  }
+}

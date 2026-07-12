@@ -1,0 +1,58 @@
+{
+  "proxy_vs_true": {
+    "blasco2018": "cross-ACTIVITY (same day, 3 states) \u2014 PROXY for cross-session",
+    "exam_stress": "cross-DAY (3 exams on different days) \u2014 TRUE cross-session"
+  },
+  "bootstrap": {
+    "blasco2018": {
+      "combination": "ppg+ecg+gsr",
+      "within_eer": 0.0142,
+      "within_ci95": [
+        0.0056,
+        0.0256
+      ],
+      "cross_eer": 0.2101,
+      "cross_ci95": [
+        0.1189,
+        0.2966
+      ],
+      "n_within_units": 3,
+      "n_cross_units": 6
+    },
+    "exam_stress": {
+      "combination": "ppg+gsr+acc",
+      "within_eer": 0.1473,
+      "within_ci95": [
+        0.1336,
+        0.1567
+      ],
+      "cross_eer": 0.3388,
+      "cross_ci95": [
+        0.2948,
+        0.3768
+      ],
+      "n_within_units": 3,
+      "n_cross_units": 6
+    }
+  },
+  "window_sweep_blasco": [
+    {
+      "window_s": 3.0,
+      "within_eer": 0.0198,
+      "cross_eer": 0.2109,
+      "collapse_x": 10.63
+    },
+    {
+      "window_s": 5.0,
+      "within_eer": 0.0142,
+      "cross_eer": 0.2101,
+      "collapse_x": 14.79
+    },
+    {
+      "window_s": 10.0,
+      "within_eer": 0.0136,
+      "cross_eer": 0.2146,
+      "collapse_x": 15.74
+    }
+  ]
+}
