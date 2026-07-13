@@ -238,6 +238,25 @@ That is 4–5 orders of magnitude short of a real device unlock.
 
 ---
 
+---
+
+## 2026 — Phase 7: figures + frozen results + one-command reproduction
+
+- `src/wfab/make_figures.py` (matplotlib-only, no external style dep) regenerates the
+  three figures from the frozen CSVs:
+  - **fig1_collapse.png** — within vs cross EER for all 7 combos, both datasets (the collapse).
+  - **fig2_security_bar.png** — FAR of best honest cross-session fusion vs Touch ID / Face ID
+    on a log axis (the 4–5-orders-of-magnitude gap).
+  - **fig3_per_signal.png** — per-signal within vs cross; PPG (cardiac) degrades most.
+  All three pass the render-then-verify legibility check.
+- `reproduce.py` runs the whole pipeline end-to-end (features → QA → benchmark → analysis →
+  robustness → figures) deterministically from `config.yaml:seed`, skipping datasets whose
+  raw data is absent. Verified: reproduces every headline number exactly (Blasco full-fusion
+  within 0.014 / cross 0.210; Exam-Stress within 0.147 / cross-day 0.339).
+- Frozen: `results/RESULTS_all.csv` (28 rows), `results/results_summary.json`, `RESULTS.md`.
+
+---
+
 ### Open questions being carried forward
 - Cross-DAY data is the weak link: the multi-signal sets are single-day. Plan uses
   Blasco's 3 activity states as a cross-condition proxy, plus PhysioNet Exam-Stress

@@ -1,0 +1,211 @@
+{
+  "headline": "Within-session fusion EER reproduces published ~0.02; collapses ~2-14x cross-session",
+  "blasco2018": {
+    "within_best": 0.0142,
+    "cross_best": 0.1994,
+    "collapse_x": 14.04,
+    "cross_type": "cross-activity (same day)"
+  },
+  "exam_stress": {
+    "within_best": 0.1413,
+    "cross_best": 0.3119,
+    "collapse_x": 2.21,
+    "cross_type": "cross-day (true)"
+  },
+  "security": [
+    {
+      "dataset": "blasco2018",
+      "combination": "ecg",
+      "cross_session_eer": 0.3738,
+      "far_at_eer": 0.3738,
+      "x_worse_than_touchid": 18690,
+      "x_worse_than_faceid": 373800,
+      "orders_above_touchid": 4.3,
+      "orders_above_faceid": 5.6
+    },
+    {
+      "dataset": "blasco2018",
+      "combination": "gsr",
+      "cross_session_eer": 0.2954,
+      "far_at_eer": 0.2954,
+      "x_worse_than_touchid": 14770,
+      "x_worse_than_faceid": 295400,
+      "orders_above_touchid": 4.2,
+      "orders_above_faceid": 5.5
+    },
+    {
+      "dataset": "blasco2018",
+      "combination": "ppg",
+      "cross_session_eer": 0.2619,
+      "far_at_eer": 0.2619,
+      "x_worse_than_touchid": 13095,
+      "x_worse_than_faceid": 261900,
+      "orders_above_touchid": 4.1,
+      "orders_above_faceid": 5.4
+    },
+    {
+      "dataset": "blasco2018",
+      "combination": "ecg+gsr",
+      "cross_session_eer": 0.2819,
+      "far_at_eer": 0.2819,
+      "x_worse_than_touchid": 14095,
+      "x_worse_than_faceid": 281900,
+      "orders_above_touchid": 4.1,
+      "orders_above_faceid": 5.5
+    },
+    {
+      "dataset": "blasco2018",
+      "combination": "ppg+ecg",
+      "cross_session_eer": 0.2516,
+      "far_at_eer": 0.2516,
+      "x_worse_than_touchid": 12580,
+      "x_worse_than_faceid": 251600,
+      "orders_above_touchid": 4.1,
+      "orders_above_faceid": 5.4
+    },
+    {
+      "dataset": "blasco2018",
+      "combination": "ppg+gsr",
+      "cross_session_eer": 0.1994,
+      "far_at_eer": 0.1994,
+      "x_worse_than_touchid": 9970,
+      "x_worse_than_faceid": 199400,
+      "orders_above_touchid": 4.0,
+      "orders_above_faceid": 5.3
+    },
+    {
+      "dataset": "blasco2018",
+      "combination": "ppg+ecg+gsr",
+      "cross_session_eer": 0.2101,
+      "far_at_eer": 0.2101,
+      "x_worse_than_touchid": 10505,
+      "x_worse_than_faceid": 210100,
+      "orders_above_touchid": 4.0,
+      "orders_above_faceid": 5.3
+    },
+    {
+      "dataset": "exam_stress",
+      "combination": "acc",
+      "cross_session_eer": 0.3633,
+      "far_at_eer": 0.3633,
+      "x_worse_than_touchid": 18165,
+      "x_worse_than_faceid": 363300,
+      "orders_above_touchid": 4.3,
+      "orders_above_faceid": 5.6
+    },
+    {
+      "dataset": "exam_stress",
+      "combination": "gsr",
+      "cross_session_eer": 0.3528,
+      "far_at_eer": 0.3528,
+      "x_worse_than_touchid": 17640,
+      "x_worse_than_faceid": 352800,
+      "orders_above_touchid": 4.2,
+      "orders_above_faceid": 5.5
+    },
+    {
+      "dataset": "exam_stress",
+      "combination": "ppg",
+      "cross_session_eer": 0.4665,
+      "far_at_eer": 0.4665,
+      "x_worse_than_touchid": 23325,
+      "x_worse_than_faceid": 466500,
+      "orders_above_touchid": 4.4,
+      "orders_above_faceid": 5.7
+    },
+    {
+      "dataset": "exam_stress",
+      "combination": "gsr+acc",
+      "cross_session_eer": 0.3119,
+      "far_at_eer": 0.3119,
+      "x_worse_than_touchid": 15595,
+      "x_worse_than_faceid": 311900,
+      "orders_above_touchid": 4.2,
+      "orders_above_faceid": 5.5
+    },
+    {
+      "dataset": "exam_stress",
+      "combination": "ppg+acc",
+      "cross_session_eer": 0.4016,
+      "far_at_eer": 0.4016,
+      "x_worse_than_touchid": 20080,
+      "x_worse_than_faceid": 401600,
+      "orders_above_touchid": 4.3,
+      "orders_above_faceid": 5.6
+    },
+    {
+      "dataset": "exam_stress",
+      "combination": "ppg+gsr",
+      "cross_session_eer": 0.3645,
+      "far_at_eer": 0.3645,
+      "x_worse_than_touchid": 18225,
+      "x_worse_than_faceid": 364500,
+      "orders_above_touchid": 4.3,
+      "orders_above_faceid": 5.6
+    },
+    {
+      "dataset": "exam_stress",
+      "combination": "ppg+gsr+acc",
+      "cross_session_eer": 0.3388,
+      "far_at_eer": 0.3388,
+      "x_worse_than_touchid": 16940,
+      "x_worse_than_faceid": 338800,
+      "orders_above_touchid": 4.2,
+      "orders_above_faceid": 5.5
+    }
+  ],
+  "robustness": {
+    "window_sweep": [
+      {
+        "window_s": 3.0,
+        "within_eer": 0.0198,
+        "cross_eer": 0.2109,
+        "collapse_x": 10.63
+      },
+      {
+        "window_s": 5.0,
+        "within_eer": 0.0142,
+        "cross_eer": 0.2101,
+        "collapse_x": 14.79
+      },
+      {
+        "window_s": 10.0,
+        "within_eer": 0.0136,
+        "cross_eer": 0.2146,
+        "collapse_x": 15.74
+      }
+    ],
+    "bootstrap": {
+      "blasco2018": {
+        "combination": "ppg+ecg+gsr",
+        "within_eer": 0.0142,
+        "within_ci95": [
+          0.0056,
+          0.0256
+        ],
+        "cross_eer": 0.2101,
+        "cross_ci95": [
+          0.1189,
+          0.2966
+        ],
+        "n_within_units": 3,
+        "n_cross_units": 6
+      },
+      "exam_stress": {
+        "combination": "ppg+gsr+acc",
+        "within_eer": 0.1473,
+        "within_ci95": [
+          0.1336,
+          0.1567
+        ],
+        "cross_eer": 0.3388,
+        "cross_ci95": [
+          0.2948,
+          0.3768
+        ],
+        "n_within_units": 3,
+        "n_cross_units": 6
+      }
+    }
+  }
+}
