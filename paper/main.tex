@@ -1,0 +1,397 @@
+\documentclass[11pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[margin=1in]{geometry}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{amsmath}
+\usepackage{siunitx}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{authblk}
+\hypersetup{colorlinks=true, linkcolor=blue!50!black, citecolor=blue!50!black, urlcolor=blue!50!black}
+\usepackage[numbers,sort&compress]{natbib}
+
+\title{\textbf{When does wearable multi-signal fusion stop working?\\
+A cross-session benchmark for fast biometric authentication}}
+\author{Noor Abdalla}
+\affil{\small Independent researcher \quad\textbullet\quad
+\texttt{\href{https://github.com/noorabdalla04/wearable-fusion-auth-benchmark}{github.com/noorabdalla04/wearable-fusion-auth-benchmark}}}
+\date{2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\noindent
+Consumer wearables can read several physiological signals at once --- photoplethysmography
+(PPG), electrocardiography (ECG), electrodermal activity (GSR) and accelerometry (ACC) ---
+and a recurring proposal is to fuse them into a fast ``your body is your password'' unlock:
+glance at the watch, get identified in seconds, like a fingerprint. Published fusion systems
+report near-perfect accuracy (equal error rates around \SI{2}{\percent}), which makes the
+idea look solved. We show that this number is an artefact of evaluating enrolment and test
+data from the \emph{same recording session}. We build an open, data-source-agnostic benchmark
+that (i) reproduces the flattering within-session number on a public multi-signal dataset
+(Blasco et al.\ 2018; full-fusion EER \num{0.014}, matching the reported ${\sim}0.02$), and
+then (ii) re-evaluates the identical pipeline across sessions using two protocols: a
+cross-activity proxy on the same day, and a genuine cross-day protocol on a second dataset
+(PhysioNet Exam-Stress; three exams on different days). Accuracy collapses: the best honest
+cross-session EER is \num{0.199} (cross-activity) and \num{0.312} (cross-day) --- a
+$14\times$ and $2.2\times$ degradation. Signal fusion gives a small, real edge over the best
+single signal ($+0.04$ to $+0.06$ EER) but does not close the gap, and the cardiac signal
+--- the component an unlock would most rely on --- degrades most across sessions, dropping
+out of the cross-session optimum entirely. Translated to a security operating point, the best
+honest cross-session fusion is ${\sim}$\num{10000}--\num{16000}$\times$ more permissive than
+Touch ID and ${\sim}$\num{200000}--\num{312000}$\times$ more permissive than Face ID. We
+conclude that fast wearable fusion is not a device-unlock primitive; its honest role is a
+low-stakes ``probably still the same wearer'' continuity check. All code, loaders, and a
+one-command reproduction are released.
+\end{abstract}
+
+\section{Introduction}
+\label{sec:intro}
+
+Every modern smartwatch and fitness band carries an optical pulse sensor, an accelerometer,
+and increasingly an electrodermal or single-lead ECG sensor. Because these signals reflect
+individual physiology, a long line of work has asked whether they can \emph{identify} the
+wearer, and a particularly attractive framing is authentication: use the body's own signals
+as a password, so a device unlocks the moment it is worn, with no PIN and no deliberate
+gesture. The appeal is obvious --- it would be effortless and continuous --- and the
+literature appears to support it, with multi-signal fusion systems reporting equal error
+rates (EERs) around \SI{2}{\percent} or better \citep{blasco2018}.
+
+There is a catch that is easy to miss and decisive in practice. Most flattering numbers are
+obtained by splitting a \emph{single recording session} into enrolment and test partitions.
+Within one session, a machine-learned classifier can lock onto session-specific nuisance
+structure --- sensor placement, contact pressure, skin state, the ambient conditions of that
+particular sitting --- that is perfectly predictive of ``which person'' \emph{within that
+session} but has nothing to do with stable identity. A real unlock must work tomorrow, on a
+freshly donned device, in a different place. The scientific question is therefore not ``can
+we separate people within a session'' (we can, easily) but ``does that separation survive a
+change of session,'' which is the only regime a password lives in.
+
+This paper answers that question empirically and honestly. Our contributions are:
+\begin{enumerate}
+  \item An open, \textbf{data-source-agnostic benchmark} for fast wearable biometric
+  authentication: a common recording schema plus thin per-dataset loaders, so heterogeneous
+  datasets (different devices, signals, and sampling rates) are evaluated by one leakage-audited
+  pipeline (\S\ref{sec:methods}).
+  \item A faithful \textbf{reproduction of the flattering within-session number}
+  (full-fusion EER \num{0.014} on Blasco 2018, matching the published ${\sim}0.02$), which
+  establishes that our pipeline is not weaker than prior art (\S\ref{sec:within}).
+  \item A \textbf{cross-session evaluation} under two protocols --- a same-day cross-activity
+  proxy and a true cross-day protocol --- quantifying an accuracy collapse of $14\times$
+  (cross-activity) and $2.2\times$ (cross-day) (\S\ref{sec:cross}).
+  \item A \textbf{fusion verdict and security-bar accounting}: fusion helps a little but does
+  not close the gap, and the honest operating point is $4$--$5$ orders of magnitude short of
+  Touch ID / Face ID (\S\ref{sec:fusion}, \S\ref{sec:security}).
+\end{enumerate}
+
+This is, deliberately, a negative result with a constructive framing. We are not reporting
+that a new system works; we are measuring precisely how and where a widely-assumed idea fails,
+and releasing the tooling so the measurement is cheap to repeat and hard to fudge.
+
+\section{Related work}
+\label{sec:related}
+
+\paragraph{Physiological biometrics.} PPG and ECG have both been studied as biometric traits,
+with within-session identification and verification accuracies frequently reported in the
+high-90s percent \citep{blasco2018}. Fusion of cardiac signals with other modalities
+(electrodermal activity, accelerometry, or a second cardiac channel) is a recurring theme,
+motivated by the intuition that jointly the signals are more unique than any one alone.
+
+\paragraph{The permanence problem.} That intuition is rarely tested across time. The
+permanence of a biometric --- its stability across sessions and days --- is a named property
+in the biometrics literature, and several wrist-PPG studies that do test it report large
+degradation across days. Crucially, the dataset we anchor on states its own limitation
+plainly: its signals ``were acquired only once on a given day,'' and it explicitly recommends
+``cross-day and long-term analysis'' as future work \citep{blasco2018}. Our study is, in part,
+that recommended follow-up, extended to fusion and to a security-bar comparison.
+
+\paragraph{Where this work sits.} We do not claim that fusing wearable signals to identify a
+person is a new idea; it is not. What is under-served is a \emph{disciplined, reproducible,
+cross-session-honest} benchmark that (a) reproduces the optimistic within-session number with
+the same pipeline it then stress-tests, (b) reports cross-session numbers with leakage
+controls and confidence intervals, and (c) states the security implication in the units a
+practitioner cares about. That is the gap we fill.
+
+\section{Methods}
+\label{sec:methods}
+
+\subsection{Datasets}
+We use two public datasets with complementary signal coverage (Table~\ref{tab:datasets}).
+
+\paragraph{Blasco 2018 \citep{blasco2018}.} A low-cost multi-signal wearable dataset:
+25 subjects (ages 18--42, mean 28.1; 16 male, 9 female), each recorded in three activity
+states on a single day (seated rest; walking; seated after a short stroll). Signals are PPG,
+ECG, and GSR at \SI{100}{\hertz}. There is \emph{no usable accelerometer} in the released
+files (the nominal motion channels are constant or zero), so Blasco fusion here is PPG+ECG+GSR.
+Because all recordings are from one day, its cross-``session'' axis is really
+\emph{cross-activity} --- a proxy for, not a substitute for, cross-day.
+
+\paragraph{PhysioNet Exam-Stress.} An Empatica E4 wrist dataset: 10 subjects, each recorded
+during three exams held on \emph{different days} (two midterms and a final). Signals are BVP
+(PPG) at \SI{64}{\hertz}, 3-axis ACC at \SI{32}{\hertz}, and EDA (GSR) at \SI{4}{\hertz};
+there is \emph{no ECG} (a wrist device). Exam-Stress fusion is therefore PPG+ACC+GSR, and its
+cross-session axis is a genuine \emph{cross-day} test. Recordings span 3--7 hours (they
+include pre/post-exam wear).
+
+Together the two datasets cover all four signals (PPG, ECG, GSR, ACC), and provide both a
+same-day proxy and a true cross-day protocol.
+
+\begin{table}[t]
+\centering
+\small
+\begin{tabular}{lccccc}
+\toprule
+Dataset & Subjects & Sessions & Signals & Rate & Cross-session axis \\
+\midrule
+Blasco 2018 & 25 & 3 activities (1 day) & PPG, ECG, GSR & \SI{100}{\hertz} & cross-activity (proxy) \\
+Exam-Stress & 10 & 3 exams (diff.\ days) & PPG, ACC, GSR & \SI{64}{\hertz}$^\dagger$ & cross-day (true) \\
+\bottomrule
+\end{tabular}
+\caption{The two benchmark datasets. $^\dagger$Exam-Stress channels have different native
+rates (BVP 64, ACC 32, EDA \SI{4}{\hertz}); the loader resamples all channels onto a shared
+\SI{64}{\hertz} grid so the schema's equal-length, time-aligned requirement holds.}
+\label{tab:datasets}
+\end{table}
+
+\subsection{Common schema and data-source-agnostic loading}
+A single \texttt{Recording} type holds \{subject id, session id, condition, sampling rate,
+and a dictionary of equal-length time-aligned channels\}, with canonical channel names
+(PPG, ECG, GSR, ACC, \dots). Each dataset has a thin loader that maps its raw files into this
+type; no downstream code knows which dataset it is processing. This is what let us add a
+second dataset (different device, different signals, different rates) with zero change to the
+signal-processing, feature, evaluation, or analysis code. The \texttt{session\_id} field is the
+split axis: within-session vs.\ cross-session evaluation differ only in how sessions are
+paired, never in the pipeline.
+
+\subsection{Signal processing and windowing}
+Signals are cleaned with standard filters (NeuroKit2 for PPG/ECG; a \SI{5}{\hertz} low-pass for
+GSR/EDA; ACC used as vector magnitude). We segment each recording into non-overlapping
+\SI{5}{\second} windows --- the fast, ``glance-and-go'' regime that a password-like unlock would
+occupy. Per-window quality flags mark non-finite, flat, or saturated channels; a window is kept
+if at least one cardiac channel (PPG or ECG) is good, and per-channel ``ok'' flags let the
+evaluation filter per signal combination (this is what prevents a dead GSR electrode on a few
+subjects from silently dropping them entirely).
+
+\subsection{Features}
+From each window we extract \emph{signal-shape} features only --- never any identity- or
+recording-level token. For cardiac channels: heart-rate and rate-variability statistics from
+detected beats (mean HR, IBI standard deviation, RMSSD), pulse-morphology statistics
+(amplitude, width, upslope), spectral band energy, and distributional shape (skew, kurtosis).
+For GSR: level, spread, range, and slope. For ACC: level, spread, range, and low/high band
+energy. This yields a 26-feature matrix per dataset.
+
+\subsection{Leakage audit}
+Before any evaluation we run an automated audit that (i) rejects identity-like feature names
+by token-boundary matching, (ii) confirms the window index is never a feature, (iii) flags
+zero-variance or degenerate features, and (iv) red-flags any single feature whose
+between-subject separability is implausibly high relative to the rest (a recording-id artefact
+signature). The audit passes on both datasets. As an end-to-end control we also permute
+subject labels within each session: a leak-free pipeline must then score at chance, which it
+does (\S\ref{sec:robust}).
+
+\subsection{Evaluation protocol}
+We evaluate closed-set verification and report the equal error rate (EER, where false-accept
+rate equals false-reject rate) and the ROC AUC. The scorer is a per-window RandomForest subject
+classifier (200 trees); the verification score for a claimed identity is the classifier's
+predicted probability of that subject. We deliberately use a supervised per-window classifier
+because that is the class of model that produces the flattering literature numbers --- a
+weaker distance-template scorer does \emph{not} reproduce them (it gives within-session
+EER ${\approx}0.17$), so anchoring on the strong model is the honest, hardest test of our
+thesis. Standardisation statistics are fit on enrolment windows only.
+
+\begin{itemize}
+  \item \textbf{Within-session:} enrol and test on disjoint window partitions of the
+  \emph{same} session; average over sessions. Window partitions are asserted disjoint at
+  runtime.
+  \item \textbf{Cross-session:} enrol on one session, test on a \emph{different} session
+  (only subjects present in both); average over ordered session pairs. On Blasco this is
+  cross-activity; on Exam-Stress it is cross-day.
+\end{itemize}
+
+All randomness is seeded (\texttt{seed} in \texttt{config.yaml}); the entire pipeline is
+regenerated by a single \texttt{reproduce.py}.
+
+\section{Results}
+\label{sec:results}
+
+\subsection{The flattering within-session number reproduces}
+\label{sec:within}
+On Blasco, full-fusion (PPG+ECG+GSR) within-session verification reaches
+\textbf{EER \num{0.014}} (Table~\ref{tab:headline}), matching the ${\sim}0.02$ reported by
+\citet{blasco2018}. This is not a straw man: our pipeline achieves the optimistic number that
+motivates the whole ``body-as-password'' premise. Every single signal is also individually
+usable within session (EER \numrange{0.084}{0.126}).
+
+\subsection{Accuracy collapses across sessions}
+\label{sec:cross}
+The same pipeline, evaluated across sessions, degrades sharply
+(Figure~\ref{fig:collapse}, Table~\ref{tab:headline}). On Blasco the best cross-activity EER
+is \num{0.199} (a $14\times$ degradation from within-session). On Exam-Stress --- the true
+cross-day test --- the best cross-day EER is \num{0.312} ($2.2\times$ degradation, from a
+within-session baseline that is itself much weaker because multi-hour wrist BVP is far noisier
+than Blasco's short controlled recording). At these operating points the system is close to a
+coin flip at any usable threshold.
+
+\begin{table}[t]
+\centering
+\small
+\begin{tabular}{llccc}
+\toprule
+Dataset & Signals & Within EER & Cross EER & Collapse \\
+\midrule
+Blasco 2018 & PPG+ECG+GSR & \textbf{0.014} & 0.199--0.210 & $\sim$14$\times$ \\
+Exam-Stress & PPG+GSR+ACC & 0.141--0.147 & 0.312--0.339 & $\sim$2.2$\times$ \\
+\bottomrule
+\end{tabular}
+\caption{Headline result. Within-session fusion reproduces the published near-perfect number;
+it does not survive a change of session. Ranges span the best cross-session combination and
+the full-triple fusion. Blasco cross is cross-activity (same day); Exam-Stress cross is
+cross-day (true).}
+\label{tab:headline}
+\end{table}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\textwidth]{fig1_collapse.png}
+\caption{Within-session (blue) vs.\ cross-session (red) EER for every signal combination, on
+both datasets. Within-session points cluster near zero on Blasco; every combination jumps
+right under a session change. Lower is better.}
+\label{fig:collapse}
+\end{figure}
+
+\subsection{Does fusion survive? A small edge, not a rescue}
+\label{sec:fusion}
+Fusion's cross-session advantage over the best single signal is real but small: $+0.062$ EER
+on Blasco, $+0.041$ on Exam-Stress. It does not close the gap --- absolute cross-session EER
+stays at \numrange{0.20}{0.34} regardless. A telling detail: the full-fusion
+triple is never the cross-session optimum. The best cross-session combination is PPG+GSR on
+Blasco (ECG drops out) and GSR+ACC on Exam-Stress (PPG drops out) --- in each dataset a
+cardiac channel is discarded because its within-session identity content does not transfer.
+Per-signal analysis (Figure~\ref{fig:persignal}) shows that no single signal survives the move
+across sessions. For a would-be unlock this is a concerning failure mode: on the wrist device
+(Exam-Stress), the cardiac PPG --- the signal a consumer unlock would most naturally rely on
+--- is the single least stable across days and is dropped from the optimum entirely.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\textwidth]{fig3_per_signal.png}
+\caption{Per-signal within- vs.\ cross-session EER. Every signal degrades toward chance
+(0.50) under a session change. On the wrist device (Exam-Stress, right) the cardiac PPG is the
+least stable single signal across days and is dropped from that dataset's cross-session
+optimum; on Blasco (left, cross-activity) ECG is the signal excluded from the optimum.}
+\label{fig:persignal}
+\end{figure}
+
+\subsection{Security-bar accounting}
+\label{sec:security}
+At the equal-error operating point the false-accept rate equals the EER, so we can place the
+honest cross-session numbers directly against published device operating points: Touch ID at
+FAR ${\approx}\num{2e-5}$ ($\sim$1 in 50{,}000) and Face ID at FAR ${\approx}\num{1e-6}$
+($\sim$1 in 1{,}000{,}000). Table~\ref{tab:security} and Figure~\ref{fig:security} give the
+gap. The best honest cross-session fusion is ${\sim}\num{9970}\times$ (cross-activity) to
+${\sim}\num{15595}\times$ (cross-day) more permissive than Touch ID, and
+${\sim}\num{199400}\times$ to ${\sim}\num{311900}\times$ more permissive than Face ID ---
+four to five orders of magnitude short of a real device unlock.
+
+\begin{table}[t]
+\centering
+\small
+\begin{tabular}{llccc}
+\toprule
+Operating point & Combination & FAR (=EER) & vs.\ Touch ID & vs.\ Face ID \\
+\midrule
+Blasco cross-activity & PPG+GSR & 0.199 & $\sim$9{,}970$\times$ & $\sim$199{,}400$\times$ \\
+Exam-Stress cross-day & GSR+ACC & 0.312 & $\sim$15{,}595$\times$ & $\sim$311{,}900$\times$ \\
+\midrule
+Touch ID (reference) & --- & \num{2e-5} & 1$\times$ & --- \\
+Face ID (reference) & --- & \num{1e-6} & --- & 1$\times$ \\
+\bottomrule
+\end{tabular}
+\caption{Security-bar accounting for the best \emph{honest} cross-session fusion. ``$\times$''
+is how many times more permissive (more false accepts) than the reference.}
+\label{tab:security}
+\end{table}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.92\textwidth]{fig2_security_bar.png}
+\caption{False-accept rate at the equal-error operating point (log scale). The shaded band is
+the device-unlock regime (Face ID / Touch ID). Even the best \emph{within-session} fusion
+(0.01) sits well outside it; the honest cross-session points (0.20, 0.31) are near the far
+edge.}
+\label{fig:security}
+\end{figure}
+
+\subsection{Robustness and honesty checks}
+\label{sec:robust}
+Three controls confirm the collapse is genuine, not an artefact of our choices:
+\begin{itemize}
+  \item \textbf{Label-shuffle (leakage control).} Permuting subject labels within each
+  session drives both within- and cross-session EER to chance
+  ($0.50$/$0.50$), confirming the real within-session performance is genuine signal, not
+  leakage.
+  \item \textbf{Window length.} Rebuilding Blasco features at \SI{3}{}, \SI{5}{}, and
+  \SI{10}{\second} leaves within-session EER at \numrange{0.014}{0.020} and cross-session at
+  ${\sim}0.21$ throughout --- the collapse is not a windowing artefact.
+  \item \textbf{Bootstrap confidence intervals.} The within- and cross-session 95\% CIs are
+  cleanly non-overlapping on both datasets (Blasco within $[0.006, 0.026]$ vs.\ cross
+  $[0.119, 0.297]$; Exam-Stress within $[0.134, 0.157]$ vs.\ cross $[0.295, 0.377]$).
+\end{itemize}
+
+\section{Discussion}
+\label{sec:discussion}
+
+\paragraph{What the number means.} The within-session ${\sim}\SI{2}{\percent}$ EER is real but
+answers the wrong question. It measures how well a model separates people \emph{inside a
+single sitting}, where session-specific nuisance structure is fully available and fully
+predictive. A password lives in the cross-session regime, and there the honest number is
+\numrange{0.20}{0.34} EER --- unusable as an unlock.
+
+\paragraph{Why fusion does not save it.} Fusion is often proposed as the fix: combine weak
+signals into a strong joint identity. Our data shows a small real gain from fusion, but the
+gain is dwarfed by the cross-session collapse, and the cardiac signal --- the one an unlock
+would most naturally lean on --- is the least stable across sessions. Fusion cannot rescue a
+set of signals that individually fail to transfer.
+
+\paragraph{The honest use case.} None of this means wearable signals are useless for identity.
+It means the framing must match the physics. A fast fused read cannot be a device unlock, but
+it can be a low-stakes \emph{continuity} check --- ``is this probably still the same wearer as
+a moment ago'' --- where a \SI{20}{\percent} error rate is tolerable because the fallback is
+benign (re-prompt, or defer to a real authenticator). Presenting the same technology as a
+fingerprint replacement is the error we are trying to forestall.
+
+\paragraph{Limitations.} (1) Blasco's cross-session axis is cross-\emph{activity} on a single
+day, a proxy; the true cross-day result comes from Exam-Stress and is if anything worse.
+(2) The two datasets' \emph{absolute} EERs are not directly comparable --- Exam-Stress wrist
+BVP over multi-hour exams is much noisier than Blasco's short controlled recording --- so we
+compare the within$\to$cross \emph{collapse within each dataset}, not raw numbers across them.
+(3) Cross-day, the residual signal is carried by GSR and ACC, which may encode
+behavioural/postural habit or per-session stress baseline rather than stable physiological
+identity; we therefore do not claim the residual is ``identity'' at all. (4) Both datasets are
+small ($n=25$ and $n=10$); the direction of the effect is robust to our controls, but absolute
+magnitudes on larger, more diverse populations remain to be measured --- which is exactly what
+the released benchmark is built to enable.
+
+\section{Conclusion}
+Fast multi-signal wearable fusion reproduces near-perfect within-session authentication and
+then fails across sessions by $2$--$14\times$, landing $4$--$5$ orders of magnitude short of a
+real device unlock. Fusion helps a little and does not close the gap; the cardiac signal
+degrades most. The contribution is a reproducible, leakage-audited, cross-session-honest
+benchmark that makes this easy to verify and extend, and a plain statement of the honest use
+case. We release all code and a one-command reproduction.
+
+\section*{Reproducibility and data availability}
+All code, loaders, the leakage audit, the evaluation harness, and \texttt{reproduce.py} are
+released at \url{https://github.com/noorabdalla04/wearable-fusion-auth-benchmark}. Raw datasets
+are obtained from their original sources under their own licenses (Blasco 2018 and PhysioNet
+Exam-Stress); the repository never redistributes raw data and documents provenance and
+checksums. Results in this paper were produced with a fixed random seed.
+
+\bibliographystyle{plainnat}
+\bibliography{refs}
+
+\end{document}

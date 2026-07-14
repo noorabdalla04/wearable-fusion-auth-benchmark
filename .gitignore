@@ -27,3 +27,19 @@ figures/**
 
 # OS
 .DS_Store
+
+# LaTeX build artifacts
+paper/*.aux
+paper/*.log
+paper/*.out
+paper/*.bbl
+paper/*.blg
+paper/*.fmt
+paper/*.log
+.tex-home/
+.tex-perllib/
+.tectonic-cache/
+.tectonic-home/
+paper/build*.log
+paper/fmt.log
+paper/*.pdf
