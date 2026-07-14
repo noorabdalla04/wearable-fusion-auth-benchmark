@@ -257,6 +257,31 @@ That is 4–5 orders of magnitude short of a real device unlock.
 
 ---
 
+---
+
+## 2026 — Phase 8: paper draft
+
+- `paper/main.tex` + `paper/refs.bib`: arXiv-ready LaTeX. Full structure — abstract, intro,
+  related work, methods (datasets, schema, processing, features, leakage audit, protocol),
+  results (within reproduction, cross-session collapse, fusion verdict, security accounting,
+  robustness), discussion (what the number means, why fusion doesn't save it, honest use case,
+  4 limitations), conclusion, reproducibility statement.
+- `paper/PAPER.md`: GitHub-readable version with embedded figures.
+- `paper/wearable_fusion_auth_paper.pdf`: 7-page rendered PDF (saved as artifact; kept out of
+  git as regenerable).
+- Every number is grounded in the frozen results, not memory. Bibliography contains only
+  session-verified entries (Blasco DOI 10.3390/s18092782 confirmed; Exam-Stress cited by
+  PhysioNet URL, DOI deliberately deferred to landing-page verification).
+- Two audit corrections applied to the paper text: (a) fig3 title/claim — ECG (not PPG)
+  degrades most on Blasco, PPG drops out only on Exam-Stress; (b) cross-session optimum
+  described correctly per dataset.
+
+**Build note:** conda `texlive-core` is incomplete in this environment (mktex* Perl wrappers
+broken); PDF was rendered via the markdown→HTML→WeasyPrint route. `main.tex` remains the
+canonical arXiv source (arXiv compiles LaTeX server-side).
+
+---
+
 ### Open questions being carried forward
 - Cross-DAY data is the weak link: the multi-signal sets are single-day. Plan uses
   Blasco's 3 activity states as a cross-condition proxy, plus PhysioNet Exam-Stress

@@ -34,11 +34,30 @@ third-party biometric gate the device lock screen. The honest expected finding i
 that fused wrist signals **do not** reach fingerprint/Face-ID security across days.
 That negative/benchmark result is the contribution.
 
+## Headline finding
+
+The paper is drafted (`paper/PAPER.md`, `paper/main.tex`). Result, on two public datasets:
+
+| Dataset | Signals | Within-session EER | Cross-session EER | Collapse |
+|---|---|---|---|---|
+| Blasco 2018 | PPG+ECG+GSR | **0.014** (reproduces the published ~0.02) | 0.199–0.210 | ~14× (cross-activity) |
+| Exam-Stress | PPG+GSR+ACC | 0.141–0.147 | 0.312–0.339 | ~2.2× (**cross-day**) |
+
+- The flattering within-session number **reproduces** — then collapses across sessions.
+- Fusion gives a small real edge (+0.04–0.06 EER) that does **not** close the gap.
+- The best honest cross-session operating point is **~10,000–16,000× more permissive than
+  Touch ID** and **~200,000–312,000× more permissive than Face ID** — 4–5 orders of magnitude
+  short of a real unlock.
+- Verified by a label-shuffle leakage control (→ chance), a window-length sweep, and
+  non-overlapping bootstrap CIs.
+
+Full numbers: `RESULTS.md`. Figures: `figures/`. One-command reproduction: `python reproduce.py`.
+
 ## Status
 
-Early. This is an open, agentically-developed research project; the commit history and
-`RESEARCH_LOG.md` are the lab notebook, including dead ends. The repo is private during
-development and will be made public alongside a preprint.
+Benchmark complete (2 datasets), paper drafted. This is an open, agentically-developed
+research project; the commit history and `RESEARCH_LOG.md` are the lab notebook, including
+dead ends. The repo is private during development and flips public alongside the preprint.
 
 ## Reproducibility
 
