@@ -108,6 +108,54 @@ like a hidden recording-id. 11/11 tests pass.
 
 ---
 
+---
+
+## 2026 — Phase 4: evaluation harness + the headline result
+
+**Harness.** Closed-set verification. Two scorers: a conservative distance-to-template
+(no supervised fit) and a supervised RandomForest (subject classifier; verification
+score = P(claimed subject)). Protocols: within-session (disjoint window split inside
+one session) vs cross-session (enrol one activity state, probe another). EER + AUC,
+averaged over sessions / session-pairs. Standardisation fit on train only; window-level
+disjointness asserted at runtime.
+
+**First attempt with the template scorer did NOT reproduce the flattering number**
+(within EER ≈ 0.17 for full fusion, not Blasco's 0.02). This is expected: the flattering
+literature numbers come from *supervised per-window classifiers*, not distance templates.
+Added the RF scorer to reproduce the published-style number honestly.
+
+**THE HEADLINE RESULT (RandomForest, Blasco PPG+ECG+GSR):**
+
+| Combination | Within-session EER | Cross-session EER | Collapse |
+|---|---|---|---|
+| ppg | 0.084 | 0.262 | 3.1× |
+| ecg | 0.100 | 0.374 | 3.7× |
+| gsr | 0.126 | 0.295 | 2.3× |
+| ppg+ecg | 0.036 | 0.252 | 7.0× |
+| ppg+gsr | 0.034 | 0.199 | 5.9× |
+| ecg+gsr | 0.041 | 0.282 | 6.9× |
+| **ppg+ecg+gsr** | **0.014** | **0.210** | **15×** |
+
+- **Flattering number reproduced:** full-fusion within-session EER **0.014** matches
+  Blasco's reported ~0.02. ✓
+- **The collapse is the finding:** the same fusion at **0.210 cross-session** — a 15×
+  degradation — the moment you test across activity states.
+- Fusion's within-session advantage (3 signals 0.014 vs best single 0.084) is real
+  within-session but **largely evaporates cross-session** (0.210 vs best single 0.262 —
+  fusion still helps, but nowhere near enough).
+
+**Leakage stress test (passes).** Permuting subject labels within session drives the RF
+within-session EER to **0.496 (chance)** — confirming the 0.014 is genuine signal, not
+window leakage. Per-session: rest 1.1–1.3%, walking 2.9% (motion degrades, as expected).
+
+**Artefact:** `results/blasco2018_benchmark.csv`.
+
+**Caveat carried forward.** Blasco's 3 states are same-day, so "cross-session" here is
+cross-ACTIVITY, not cross-DAY. The true cross-day test needs PhysioNet Exam-Stress
+(Phase 5). Expect cross-DAY to be at least as bad as cross-activity.
+
+---
+
 ### Open questions being carried forward
 - Cross-DAY data is the weak link: the multi-signal sets are single-day. Plan uses
   Blasco's 3 activity states as a cross-condition proxy, plus PhysioNet Exam-Stress
