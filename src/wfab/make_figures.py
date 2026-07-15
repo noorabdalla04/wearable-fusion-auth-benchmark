@@ -40,7 +40,7 @@ def fig1(rf1, rf2, out):
         ax.set_title(t, fontsize=8, loc="left")
     axes[0].legend(loc="center right", frameon=False, fontsize=7)
     axes[1].set_yticklabels([])
-    fig.suptitle("Fusion accuracy collapses when tested across sessions",
+    fig.suptitle("Within-session accuracy does not transfer across sessions",
                  fontsize=10, weight="bold", y=1.02)
     fig.tight_layout(); fig.savefig(out, dpi=300, bbox_inches="tight"); plt.close(fig)
 
@@ -68,7 +68,7 @@ def fig2(rf1, rf2, out):
     ax.axvspan(5e-7, TOUCH, color="#e8f0e8", zorder=-1)
     ax.text(np.sqrt(5e-7 * TOUCH), -0.45, "device-unlock\nregime", ha="center",
             va="bottom", fontsize=6.3, color="#4a7a4a", style="italic")
-    fig.suptitle("Honest cross-session fusion is 4\u20135 orders of magnitude short of a real device unlock",
+    fig.suptitle("Honest cross-session fusion is 4 to 5 orders of magnitude short of a real device unlock",
                  fontsize=8.8, weight="bold", y=1.03)
     fig.tight_layout(); fig.savefig(out, dpi=300, bbox_inches="tight"); plt.close(fig)
 

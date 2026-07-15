@@ -10,9 +10,11 @@ A. **Does fusion survive cross-session?**
 B. **Security-bar accounting.**
    Translate cross-session EER into the false-accept rate a user would face and compare
    to published operating points: Touch ID FAR ~= 1/50,000 (2e-5), Face ID FAR ~= 1/1e6.
-   At EER, FAR = FRR = EER, so we state how many orders of magnitude the honest
-   cross-session operating point sits above those bars, and the false-reject cost of
-   trying to push FAR down to the bar (using the ROC where available).
+   At the equal-error operating point FAR = FRR = EER, so we state how many orders of
+   magnitude the honest cross-session operating point sits above those bars. NOTE: the
+   device FARs are manufacturer specs tuned to a LOW-FAR (high-FRR) point, whereas our
+   number is the balanced equal-error point; the comparison is order-of-magnitude and
+   directional, not a same-threshold comparison.
 
 Bootstrap CIs are added by resampling the per-pair/per-session EERs (a light,
 assumption-free interval over the averaging units the harness already produces).
@@ -51,16 +53,32 @@ def _best_rows(bench: pd.DataFrame, model: str) -> pd.DataFrame:
 def fusion_verdict(bench: pd.DataFrame, model: str = "rf") -> dict:
     best = _best_rows(bench, model)
     verdict = {"model": model, "rows": best.to_dict("records"), "by_dataset": {}}
+    b = bench[bench.model == model]
     for ds in best.dataset.unique():
         w = best[(best.dataset == ds) & (best.protocol == "within_session")]
         c = best[(best.dataset == ds) & (best.protocol == "cross_session")]
         if len(w) and len(c):
             w, c = w.iloc[0], c.iloc[0]
+            # same-combination collapse: use the SAME signal set (the full-fusion
+            # triple) for within and cross, so the ratio is not cross-combo.
+            triple = b[(b.dataset == ds) & (b.n_signals == b.n_signals.max())]
+            wt = triple[triple.protocol == "within_session"]
+            ct = triple[triple.protocol == "cross_session"]
+            same_combo_collapse = None
+            same_combo = None
+            if len(wt) and len(ct) and wt.iloc[0].eer > 0:
+                same_combo = wt.iloc[0].combination
+                same_combo_collapse = round(ct.iloc[0].eer / wt.iloc[0].eer, 2)
             verdict["by_dataset"][ds] = {
-                "within_best_eer": w.best_eer, "cross_best_eer": c.best_eer,
+                "within_best_eer": w.best_eer, "best_within_combo": w.best_combo,
+                "cross_best_eer": c.best_eer, "best_cross_combo": c.best_combo,
                 "within_fusion_gain": w.fusion_gain_eer,
                 "cross_fusion_gain": c.fusion_gain_eer,
-                "collapse_factor": round(c.best_eer / w.best_eer, 2) if w.best_eer > 0 else None,
+                "same_combo": same_combo,
+                "same_combo_within_eer": round(float(wt.iloc[0].eer), 4) if len(wt) else None,
+                "same_combo_cross_eer": round(float(ct.iloc[0].eer), 4) if len(ct) else None,
+                "same_combo_collapse_factor": same_combo_collapse,
+                "cross_combo_collapse_factor": round(c.best_eer / w.best_eer, 2) if w.best_eer > 0 else None,
                 "fusion_advantage_survives": bool(c.fusion_gain_eer > 0.02),
             }
     return verdict
@@ -106,9 +124,10 @@ if __name__ == "__main__":
     rep = main()
     print("=== FUSION VERDICT (per dataset) ===")
     for ds, v in rep["fusion_verdict"]["by_dataset"].items():
-        print(f"{ds}: within {v['within_best_eer']:.3f} -> cross {v['cross_best_eer']:.3f} "
-              f"(collapse {v['collapse_factor']}x) | cross fusion gain {v['cross_fusion_gain']:+.3f} "
-              f"-> survives: {v['fusion_advantage_survives']}")
+        print(f"{ds}: [{v['same_combo']}] within {v['same_combo_within_eer']:.3f} -> cross "
+              f"{v['same_combo_cross_eer']:.3f} (same-combo collapse {v['same_combo_collapse_factor']}x) | "
+              f"best cross {v['best_cross_combo']} {v['cross_best_eer']:.3f}, fusion gain "
+              f"{v['cross_fusion_gain']:+.3f} -> survives: {v['fusion_advantage_survives']}")
     print("\n=== SECURITY BAR (cross-session, best fusion per dataset) ===")
     sec = pd.DataFrame(rep["security_accounting"]["rows"])
     best = sec.loc[sec.groupby("dataset").cross_session_eer.idxmin()]

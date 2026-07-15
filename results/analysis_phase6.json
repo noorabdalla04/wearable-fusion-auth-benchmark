@@ -15,10 +15,10 @@
         "dataset": "blasco2018",
         "protocol": "within_session",
         "best_combo": "ppg+ecg+gsr",
-        "best_eer": 0.0142,
+        "best_eer": 0.0305,
         "best_single": "ppg",
-        "best_single_eer": 0.084,
-        "fusion_gain_eer": 0.0698
+        "best_single_eer": 0.1129,
+        "fusion_gain_eer": 0.0824
       },
       {
         "dataset": "exam_stress",
@@ -33,27 +33,39 @@
         "dataset": "exam_stress",
         "protocol": "within_session",
         "best_combo": "gsr+acc",
-        "best_eer": 0.1413,
+        "best_eer": 0.2257,
         "best_single": "gsr",
-        "best_single_eer": 0.1997,
-        "fusion_gain_eer": 0.0584
+        "best_single_eer": 0.2753,
+        "fusion_gain_eer": 0.0496
       }
     ],
     "by_dataset": {
       "blasco2018": {
-        "within_best_eer": 0.0142,
+        "within_best_eer": 0.0305,
+        "best_within_combo": "ppg+ecg+gsr",
         "cross_best_eer": 0.1994,
-        "within_fusion_gain": 0.0698,
+        "best_cross_combo": "ppg+gsr",
+        "within_fusion_gain": 0.0824,
         "cross_fusion_gain": 0.0625,
-        "collapse_factor": 14.04,
+        "same_combo": "ppg+ecg+gsr",
+        "same_combo_within_eer": 0.0305,
+        "same_combo_cross_eer": 0.2101,
+        "same_combo_collapse_factor": 6.89,
+        "cross_combo_collapse_factor": 6.54,
         "fusion_advantage_survives": true
       },
       "exam_stress": {
-        "within_best_eer": 0.1413,
+        "within_best_eer": 0.2257,
+        "best_within_combo": "gsr+acc",
         "cross_best_eer": 0.3119,
-        "within_fusion_gain": 0.0584,
+        "best_cross_combo": "gsr+acc",
+        "within_fusion_gain": 0.0496,
         "cross_fusion_gain": 0.0409,
-        "collapse_factor": 2.21,
+        "same_combo": "ppg+gsr+acc",
+        "same_combo_within_eer": 0.2342,
+        "same_combo_cross_eer": 0.3388,
+        "same_combo_collapse_factor": 1.45,
+        "cross_combo_collapse_factor": 1.38,
         "fusion_advantage_survives": true
       }
     }

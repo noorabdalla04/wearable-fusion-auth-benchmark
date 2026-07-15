@@ -1,16 +1,27 @@
 {
-  "headline": "Within-session fusion EER reproduces published ~0.02; collapses ~2-14x cross-session",
-  "blasco2018": {
-    "within_best": 0.0142,
-    "cross_best": 0.1994,
-    "collapse_x": 14.04,
-    "cross_type": "cross-activity (same day)"
-  },
-  "exam_stress": {
-    "within_best": 0.1413,
-    "cross_best": 0.3119,
-    "collapse_x": 2.21,
-    "cross_type": "cross-day (true)"
+  "headline": {
+    "blasco2018": {
+      "within_best_eer": 0.0305,
+      "best_within_combo": "ppg+ecg+gsr",
+      "cross_best_eer": 0.1994,
+      "best_cross_combo": "ppg+gsr",
+      "same_combo": "ppg+ecg+gsr",
+      "same_combo_within_eer": 0.0305,
+      "same_combo_cross_eer": 0.2101,
+      "same_combo_collapse_x": 6.89,
+      "cross_type": "cross-activity (same day)"
+    },
+    "exam_stress": {
+      "within_best_eer": 0.2257,
+      "best_within_combo": "gsr+acc",
+      "cross_best_eer": 0.3119,
+      "best_cross_combo": "gsr+acc",
+      "same_combo": "ppg+gsr+acc",
+      "same_combo_within_eer": 0.2342,
+      "same_combo_cross_eer": 0.3388,
+      "same_combo_collapse_x": 1.45,
+      "cross_type": "cross-day (true)"
+    }
   },
   "security": [
     {
@@ -154,58 +165,89 @@
       "orders_above_faceid": 5.5
     }
   ],
-  "robustness": {
-    "window_sweep": [
-      {
-        "window_s": 3.0,
-        "within_eer": 0.0198,
-        "cross_eer": 0.2109,
-        "collapse_x": 10.63
-      },
-      {
-        "window_s": 5.0,
-        "within_eer": 0.0142,
-        "cross_eer": 0.2101,
-        "collapse_x": 14.79
-      },
-      {
-        "window_s": 10.0,
-        "within_eer": 0.0136,
-        "cross_eer": 0.2146,
-        "collapse_x": 15.74
-      }
-    ],
-    "bootstrap": {
-      "blasco2018": {
-        "combination": "ppg+ecg+gsr",
-        "within_eer": 0.0142,
-        "within_ci95": [
-          0.0056,
-          0.0256
-        ],
-        "cross_eer": 0.2101,
-        "cross_ci95": [
-          0.1189,
-          0.2966
-        ],
-        "n_within_units": 3,
-        "n_cross_units": 6
-      },
-      "exam_stress": {
-        "combination": "ppg+gsr+acc",
-        "within_eer": 0.1473,
-        "within_ci95": [
-          0.1336,
-          0.1567
-        ],
-        "cross_eer": 0.3388,
-        "cross_ci95": [
-          0.2948,
-          0.3768
-        ],
-        "n_within_units": 3,
-        "n_cross_units": 6
-      }
+  "label_shuffle_control": {
+    "blasco2018": {
+      "combination": "ppg+ecg+gsr",
+      "within_real_eer": 0.0305,
+      "within_shuffled_eer": 0.5023,
+      "cross_real_eer": 0.2101,
+      "cross_shuffled_eer": 0.497,
+      "passes": true
+    },
+    "exam_stress": {
+      "combination": "ppg+gsr+acc",
+      "within_real_eer": 0.2342,
+      "within_shuffled_eer": 0.4968,
+      "cross_real_eer": 0.3388,
+      "cross_shuffled_eer": 0.4974,
+      "passes": true
     }
-  }
+  },
+  "split_leakage_check": {
+    "blasco2018": {
+      "combination": "ppg+ecg+gsr",
+      "within_blocked_eer": 0.0305,
+      "within_random_eer": 0.0142,
+      "inflation_abs": 0.0163
+    },
+    "exam_stress": {
+      "combination": "ppg+gsr+acc",
+      "within_blocked_eer": 0.2342,
+      "within_random_eer": 0.1473,
+      "inflation_abs": 0.0869
+    }
+  },
+  "bootstrap": {
+    "blasco2018": {
+      "combination": "ppg+ecg+gsr",
+      "within_eer": 0.0305,
+      "within_ci95": [
+        0.0142,
+        0.0467
+      ],
+      "cross_eer": 0.2101,
+      "cross_ci95": [
+        0.1189,
+        0.2966
+      ],
+      "n_within_units": 3,
+      "n_cross_units": 6
+    },
+    "exam_stress": {
+      "combination": "ppg+gsr+acc",
+      "within_eer": 0.2342,
+      "within_ci95": [
+        0.2258,
+        0.2489
+      ],
+      "cross_eer": 0.3388,
+      "cross_ci95": [
+        0.2948,
+        0.3768
+      ],
+      "n_within_units": 3,
+      "n_cross_units": 6
+    }
+  },
+  "window_sweep_blasco": [
+    {
+      "window_s": 3.0,
+      "within_eer": 0.0383,
+      "cross_eer": 0.2109,
+      "collapse_x": 5.5
+    },
+    {
+      "window_s": 5.0,
+      "within_eer": 0.0305,
+      "cross_eer": 0.2101,
+      "collapse_x": 6.89
+    },
+    {
+      "window_s": 10.0,
+      "within_eer": 0.0218,
+      "cross_eer": 0.2146,
+      "collapse_x": 9.86
+    }
+  ],
+  "note": "within-session uses a LEAK-FREE time-blocked split; random-split (leaky) numbers are in split_leakage_check only."
 }

@@ -63,6 +63,45 @@ def window_length_sweep(dataset: str, data_root: str, combo, seed: int,
     return out
 
 
+def label_shuffle_control(df: pd.DataFrame, combo, seed: int) -> dict:
+    """Leakage control: permute subject_id WITHIN each session, then re-run the
+    within- and cross-session evaluation. A leak-free pipeline must score at
+    chance (EER ~0.50) once identity is destroyed. If it does not, the reported
+    accuracy is an artefact rather than genuine identity signal.
+    """
+    rng = np.random.default_rng(seed)
+    shuffled = df.copy()
+    for sess in shuffled.session_id.unique():
+        m = shuffled.session_id == sess
+        perm = shuffled.loc[m, "subject_id"].to_numpy().copy()
+        rng.shuffle(perm)
+        shuffled.loc[m, "subject_id"] = perm
+    w_real = within_session(df, combo, seed=seed, model="rf")
+    c_real = cross_session(df, combo, seed=seed, model="rf")
+    w_shuf = within_session(shuffled, combo, seed=seed, model="rf")
+    c_shuf = cross_session(shuffled, combo, seed=seed, model="rf")
+    return {"combination": "+".join(combo),
+            "within_real_eer": round(w_real.eer, 4), "within_shuffled_eer": round(w_shuf.eer, 4),
+            "cross_real_eer": round(c_real.eer, 4), "cross_shuffled_eer": round(c_shuf.eer, 4),
+            "passes": bool(w_shuf.eer > 0.42 and c_shuf.eer > 0.42)}
+
+
+def split_leakage_check(df: pd.DataFrame, combo, seed: int) -> dict:
+    """Quantify temporal-adjacency leakage in the within-session split.
+
+    A RANDOM window split lets autocorrelated neighbours straddle the enrol/probe
+    boundary and inflates within-session accuracy; a time-BLOCKED split does not.
+    We report both so the inflation is explicit and the honest (blocked) number is
+    the one used everywhere else.
+    """
+    w_block = within_session(df, combo, seed=seed, model="rf", split="blocked")
+    w_rand = within_session(df, combo, seed=seed, model="rf", split="random")
+    return {"combination": "+".join(combo),
+            "within_blocked_eer": round(w_block.eer, 4),
+            "within_random_eer": round(w_rand.eer, 4),
+            "inflation_abs": round(w_block.eer - w_rand.eer, 4)}
+
+
 def main() -> dict:
     cfg = load_config(); seed = set_seed(cfg["seed"])
     rdir = Path(REPO_ROOT) / "results"
@@ -70,14 +109,19 @@ def main() -> dict:
         "blasco2018": "cross-ACTIVITY (same day, 3 states) — PROXY for cross-session",
         "exam_stress": "cross-DAY (3 exams on different days) — TRUE cross-session"}}
 
-    # bootstrap CIs on each dataset's best fusion combo
-    boots = {}
+    # bootstrap CIs + leakage controls on each dataset's best fusion combo
+    boots, shuffles, splits = {}, {}, {}
     for ds, combo in [("blasco2018", ("ppg", "ecg", "gsr")),
                       ("exam_stress", ("ppg", "gsr", "acc"))]:
         p = rdir / f"{ds}_features.parquet"
         if p.exists():
-            boots[ds] = bootstrap_collapse(pd.read_parquet(p), combo, seed)
+            d = pd.read_parquet(p)
+            boots[ds] = bootstrap_collapse(d, combo, seed)
+            shuffles[ds] = label_shuffle_control(d, combo, seed)
+            splits[ds] = split_leakage_check(d, combo, seed)
     report["bootstrap"] = boots
+    report["label_shuffle_control"] = shuffles
+    report["split_leakage_check"] = splits
 
     # window-length sweep (Blasco, fast)
     report["window_sweep_blasco"] = window_length_sweep(

@@ -1,16 +1,16 @@
 # Research log
 
 This is the project's lab notebook. It records decisions, rationale, and dead ends
-in the order they happened — including the ones that didn't work out. It is meant to
+in the order they happened, including the ones that didn't work out. It is meant to
 be read top-to-bottom as the story of how the project reached its conclusions.
 
 ---
 
-## 2026 — Project framing
+## 2026, Project framing
 
 **Goal (as refined with the project owner).** Find whether a *combination* of body
 signals, captured together in a few seconds on a wearable, can authenticate a person
-"uniquely, credibly, consistently, and fast" — the password-like unlock idea.
+"uniquely, credibly, consistently, and fast", the password-like unlock idea.
 
 **Reality check performed before any code.** A literature + feasibility review
 established three hard constraints on the *product* version of this idea:
@@ -19,7 +19,7 @@ established three hard constraints on the *product* version of this idea:
    (near-zero EER) but degrade sharply across days; single-signal wrist PPG rises to
    ~23% EER cross-day (Sancho et al. 2018, doi:10.3390/s18051525). The best *honest*
    cross-session fusion number found still includes a fingerprint and lands at ~6.9%
-   EER (arXiv:2412.05660) — thousands of times short of Touch ID / Face ID.
+   EER (arXiv:2412.05660), thousands of times short of Touch ID / Face ID.
 2. **Hardware access.** No consumer wrist device exposes the simultaneous *raw* signals
    a hobbyist would need without privileged/partner access.
 3. **Platform lock.** iOS/Android do not let a third-party biometric gate device unlock.
@@ -31,19 +31,19 @@ benchmark / negative result, this is publishable and beginner-feasible on public
 
 **Novelty scan (verified).** The single closest prior work is Blasco & Peris-Lopez 2018
 (doi:10.3390/s18092782): PPG+ECG+ACC+GSR on 25 subjects across 3 activity states, fused,
-AUC 0.99 / EER 0.02 with 60 s training — dataset released publicly. Crucially, its own
+AUC 0.99 / EER 0.02 with 60 s training, dataset released publicly. Crucially, its own
 stated limitation is that signals "were acquired only once on a given day" and cross-day
 analysis is "recommended in a future study." That future study is our opening. Full scan:
 `novelty_scan.md` (kept with the project record).
 
-**Anchor dataset.** Blasco 2018 — we extend the exact paper that did the within-session
+**Anchor dataset.** Blasco 2018, we extend the exact paper that did the within-session
 version.
 
 ---
 
 ---
 
-## 2026 — Phase 2: Blasco data acquired, schema + loader built
+## 2026, Phase 2: Blasco data acquired, schema + loader built
 
 **Download.** Blasco dataset fetched from the Dropbox link cited in the paper
 (`LowCostSensorsBiometrics.zip`, 5.7 MB, sha256 `59537950e36f…`). CC BY 4.0.
@@ -54,14 +54,14 @@ column and two zero columns. Directory `1/2/3` = activity states rest / walking 
 rest-after-stroll. Subject = UUID, stable across states.
 
 **Honest finding worth flagging: there is NO usable accelerometer in the released
-data.** Columns 4–6 are constant/zero. The paper's abstract lists ACC among the
+data.** Columns 4-6 are constant/zero. The paper's abstract lists ACC among the
 sensors, but the released fusion signals are PPG/ECG/GSR only (matching the paper's
 best config, ECG+PPG+GSR). So for the Blasco anchor, our "multi-signal fusion" is
 **PPG+ECG+GSR**, not PPG+ACC. ACC-based fusion will have to come from PPG-DaLiA / PTT-PPG.
 
 **Loader validated against the paper.** Loading into the common schema yields exactly
-25 subjects × 3 states = 75 recordings, PPG/ECG/GSR at 100 Hz, ages 18–42 (mean 28.1),
-16M/9F — matches the paper's stated "16 males and 9 females, average 28.2, median 27".
+25 subjects × 3 states = 75 recordings, PPG/ECG/GSR at 100 Hz, ages 18-42 (mean 28.1),
+16M/9F, matches the paper's stated "16 males and 9 females, average 28.2, median 27".
 This subject-demographics match is our evidence the loader reads the data correctly.
 See `results/blasco2018_summary.json`. 6/6 unit tests pass.
 
@@ -74,7 +74,7 @@ are distinguishable. This is the reusable, data-source-agnostic core.
 
 ---
 
-## 2026 — Phase 3: signal processing + features (with two honest course-corrections)
+## 2026, Phase 3: signal processing + features (with two honest course-corrections)
 
 **Pipeline.** load → clean (neurokit2 ppg_clean/ecg_clean; GSR low-pass) → segment into
 5 s non-overlapping windows (drop first for settling) → per-channel quality flags →
@@ -85,21 +85,20 @@ average-beat morphology (amplitude, width, up-slope), spectral band energy, skew
 GSR: tonic mean/std/range/slope. ACC: magnitude stats + band energy (when present).
 26 features on Blasco (PPG+ECG+GSR).
 
-**Course-correction #1 — retention rule.** First build required ALL channels good per
+**Course-correction #1, retention rule.** First build required ALL channels good per
 window, which silently dropped 3 subjects whose GSR electrode was dead the whole
-recording — throwing away their perfectly good PPG/ECG. Fixed: keep a window if at
+recording, throwing away their perfectly good PPG/ECG. Fixed: keep a window if at
 least one cardiac channel (PPG or ECG) is good, and record per-channel `ok_<CH>` flags
 so the evaluation harness filters per signal-combination. Result: all 25 subjects
-retained, 3871 windows. Per-channel good-rates: **PPG 100%, ECG 94.8%, GSR 84.1%** —
-GSR is the weak sensor, and that is now visible rather than hidden.
+retained, 3871 windows. Per-channel good-rates: **PPG 100%, ECG 94.8%, GSR 84.1%**, GSR is the weak sensor, and that is now visible rather than hidden.
 
-**Course-correction #2 — leakage-audit false positive.** The audit's banned-substring
+**Course-correction #2, leakage-audit false positive.** The audit's banned-substring
 check flagged `ppg_width_mean`/`ecg_width_mean` because "width" contains "id". Fixed to
 token-boundary matching. Audit now passes: no leaky names, window_index excluded from
 features, no zero-variance or suspicious features.
 
 **Leakage audit result (passes).** Top single-feature subject separability is `gsr_mean`
-(ANOVA F≈1057) — physiologically real (baseline skin conductance differs between
+(ANOVA F≈1057), physiologically real (baseline skin conductance differs between
 people), not an artefact; no feature exceeds 20× the 90th-percentile F, so nothing looks
 like a hidden recording-id. 11/11 tests pass.
 
@@ -110,7 +109,7 @@ like a hidden recording-id. 11/11 tests pass.
 
 ---
 
-## 2026 — Phase 4: evaluation harness + the headline result
+## 2026, Phase 4: evaluation harness + the headline result
 
 **Harness.** Closed-set verification. Two scorers: a conservative distance-to-template
 (no supervised fit) and a supervised RandomForest (subject classifier; verification
@@ -138,15 +137,14 @@ Added the RF scorer to reproduce the published-style number honestly.
 
 - **Flattering number reproduced:** full-fusion within-session EER **0.014** matches
   Blasco's reported ~0.02. ✓
-- **The collapse is the finding:** the same fusion at **0.210 cross-session** — a 15×
-  degradation — the moment you test across activity states.
+- **The collapse is the finding:** the same fusion at **0.210 cross-session**, a 15×
+  degradation, the moment you test across activity states.
 - Fusion's within-session advantage (3 signals 0.014 vs best single 0.084) is real
-  within-session but **largely evaporates cross-session** (0.210 vs best single 0.262 —
-  fusion still helps, but nowhere near enough).
+  within-session but **largely evaporates cross-session** (0.210 vs best single 0.262, fusion still helps, but nowhere near enough).
 
 **Leakage stress test (passes).** Permuting subject labels within session drives the RF
-within-session EER to **0.496 (chance)** — confirming the 0.014 is genuine signal, not
-window leakage. Per-session: rest 1.1–1.3%, walking 2.9% (motion degrades, as expected).
+within-session EER to **0.496 (chance)**, confirming the 0.014 is genuine signal, not
+window leakage. Per-session: rest 1.1-1.3%, walking 2.9% (motion degrades, as expected).
 
 **Artefact:** `results/blasco2018_benchmark.csv`.
 
@@ -158,12 +156,12 @@ cross-ACTIVITY, not cross-DAY. The true cross-day test needs PhysioNet Exam-Stre
 
 ---
 
-## 2026 — Phase 5: second dataset (Exam-Stress) + the TRUE cross-day test
+## 2026, Phase 5: second dataset (Exam-Stress) + the TRUE cross-day test
 
 **Schema validated on a second, very different dataset.** PhysioNet Wearable Exam-Stress
 (Empatica E4 wrist): 10 subjects × 3 exams on DIFFERENT days (Midterm 1/2, Final) =
 genuine cross-DAY axis. Different device, different signals (PPG+ACC+GSR, NO ECG),
-different native rates (BVP 64 / ACC 32 / EDA 4 Hz) — all mapped into the common schema
+different native rates (BVP 64 / ACC 32 / EDA 4 Hz), all mapped into the common schema
 with zero change to downstream code by resampling to a shared 64 Hz grid. 30 recordings,
 all 10 subjects in all 3 sessions. License ODC-By. This is the payoff of the
 data-source-agnostic design. Blasco (PPG+ECG+GSR) and Exam-Stress (PPG+ACC+GSR) together
@@ -179,13 +177,13 @@ cover all four signals.
 | gsr+acc | 0.141 | 0.312 |
 | ppg+gsr+acc | 0.147 | 0.339 |
 
-- **Cross-day is worse than cross-activity (Blasco):** best fusion cross-day EER ~0.31–0.34
+- **Cross-day is worse than cross-activity (Blasco):** best fusion cross-day EER ~0.31-0.34
   vs Blasco cross-activity ~0.21. Confirms and strengthens the collapse finding: across
   real days, the system sits near a coin-flip at usable operating points.
 - **Leakage stress test passes:** label-shuffle drives BOTH within (0.143→0.500) and
   cross-day (0.339→0.501) to exact chance. The residual signal is genuine.
 
-**TWO HONEST CAVEATS (must carry into the paper — do not spin these):**
+**TWO HONEST CAVEATS (must carry into the paper, do not spin these):**
 1. **Exam-Stress PPG is much weaker than Blasco's even within-session** (0.363 vs 0.084).
    The E4 wrist BVP over a multi-hour exam is far noisier than Blasco's short controlled
    recording. So the two datasets' absolute numbers are NOT directly comparable; the
@@ -193,21 +191,21 @@ cover all four signals.
 2. **Cross-day, PPG is near-useless (0.464 ≈ chance); GSR/ACC carry the residual.** This is
    a real interpretation risk: ACC "identity" across exam days may reflect behavioural /
    postural habit rather than physiology, and GSR baseline may be confounded with each
-   exam's stress level rather than stable identity. The cardiac signal — the thing an
-   unlock would actually rely on — is the FIRST to collapse cross-day. This arguably makes
+   exam's stress level rather than stable identity. The cardiac signal, the thing an
+   unlock would actually rely on, is the FIRST to collapse cross-day. This arguably makes
    the negative finding stronger, but the mechanism must be stated plainly, not sold as
    "fusion works."
 
 **Artefacts:** `results/exam_stress_benchmark.csv`, `_summary.json`, `_feature_qa.json`
-(QA passes), `_features.parquet` (200 windows/recording cap; recordings are 3–7 h).
+(QA passes), `_features.parquet` (200 windows/recording cap; recordings are 3-7 h).
 
 ---
 
 ---
 
-## 2026 — Phase 6: fusion verdict + security-bar accounting + robustness
+## 2026, Phase 6: fusion verdict + security-bar accounting + robustness
 
-**Does fusion survive cross-session? — MIXED, and reported honestly.**
+**Does fusion survive cross-session?, MIXED, and reported honestly.**
 - Fusion's advantage *technically* persists cross-session: best fusion beats best single
   by +0.062 EER (Blasco) / +0.041 (Exam-Stress). So "fusion helps" is literally true.
 - BUT the collapse dominates: within→cross is 14× (Blasco cross-activity) and 2.2×
@@ -215,7 +213,7 @@ cover all four signals.
   of fusion. The correct statement: **fusion gives a small, real edge that does not
   come close to closing the cross-session gap.**
 - Telling detail: the best cross-session combo is **PPG+GSR** (Blasco) and **GSR+ACC**
-  (Exam-Stress) — the cardiac signal drops out of the optimum cross-session, consistent
+  (Exam-Stress), the cardiac signal drops out of the optimum cross-session, consistent
   with cardiac morphology being the first thing to destabilise across sessions.
 
 **Security-bar accounting (the number that ends the "password" framing).**
@@ -224,11 +222,10 @@ At EER, FAR = FRR = EER. Best honest cross-session fusion:
   **~199,400× worse than Face ID** (FAR 1e-6).
 - Exam-Stress (cross-DAY, GSR+ACC): EER 0.312 = **~15,600× worse than Touch ID**,
   **~311,900× worse than Face ID**.
-That is 4–5 orders of magnitude short of a real device unlock.
+That is 4-5 orders of magnitude short of a real device unlock.
 
 **Robustness (collapse is not an artefact).**
-- Window-length sweep (Blasco 3/5/10 s): within stays 0.014–0.020, cross stays ~0.21 —
-  collapse holds at every window length.
+- Window-length sweep (Blasco 3/5/10 s): within stays 0.014-0.020, cross stays ~0.21, collapse holds at every window length.
 - Bootstrap 95% CIs are cleanly non-overlapping: Blasco within [0.006, 0.026] vs cross
   [0.119, 0.297]; Exam-Stress within [0.134, 0.157] vs cross [0.295, 0.377].
 - Proxy vs true is tagged explicitly everywhere: Blasco cross-session = cross-ACTIVITY
@@ -240,14 +237,14 @@ That is 4–5 orders of magnitude short of a real device unlock.
 
 ---
 
-## 2026 — Phase 7: figures + frozen results + one-command reproduction
+## 2026, Phase 7: figures + frozen results + one-command reproduction
 
 - `src/wfab/make_figures.py` (matplotlib-only, no external style dep) regenerates the
   three figures from the frozen CSVs:
-  - **fig1_collapse.png** — within vs cross EER for all 7 combos, both datasets (the collapse).
-  - **fig2_security_bar.png** — FAR of best honest cross-session fusion vs Touch ID / Face ID
-    on a log axis (the 4–5-orders-of-magnitude gap).
-  - **fig3_per_signal.png** — per-signal within vs cross; PPG (cardiac) degrades most.
+  - **fig1_collapse.png**, within vs cross EER for all 7 combos, both datasets (the collapse).
+  - **fig2_security_bar.png**, FAR of best honest cross-session fusion vs Touch ID / Face ID
+    on a log axis (the 4-5-orders-of-magnitude gap).
+  - **fig3_per_signal.png**, per-signal within vs cross; PPG (cardiac) degrades most.
   All three pass the render-then-verify legibility check.
 - `reproduce.py` runs the whole pipeline end-to-end (features → QA → benchmark → analysis →
   robustness → figures) deterministically from `config.yaml:seed`, skipping datasets whose
@@ -259,9 +256,9 @@ That is 4–5 orders of magnitude short of a real device unlock.
 
 ---
 
-## 2026 — Phase 8: paper draft
+## 2026, Phase 8: paper draft
 
-- `paper/main.tex` + `paper/refs.bib`: arXiv-ready LaTeX. Full structure — abstract, intro,
+- `paper/main.tex` + `paper/refs.bib`: arXiv-ready LaTeX. Full structure, abstract, intro,
   related work, methods (datasets, schema, processing, features, leakage audit, protocol),
   results (within reproduction, cross-session collapse, fusion verdict, security accounting,
   robustness), discussion (what the number means, why fusion doesn't save it, honest use case,
@@ -272,7 +269,7 @@ That is 4–5 orders of magnitude short of a real device unlock.
 - Every number is grounded in the frozen results, not memory. Bibliography contains only
   session-verified entries (Blasco DOI 10.3390/s18092782 confirmed; Exam-Stress cited by
   PhysioNet URL, DOI deliberately deferred to landing-page verification).
-- Two audit corrections applied to the paper text: (a) fig3 title/claim — ECG (not PPG)
+- Two audit corrections applied to the paper text: (a) fig3 title/claim, ECG (not PPG)
   degrades most on Blasco, PPG drops out only on Exam-Stress; (b) cross-session optimum
   described correctly per dataset.
 
@@ -285,5 +282,55 @@ canonical arXiv source (arXiv compiles LaTeX server-side).
 ### Open questions being carried forward
 - Cross-DAY data is the weak link: the multi-signal sets are single-day. Plan uses
   Blasco's 3 activity states as a cross-condition proxy, plus PhysioNet Exam-Stress
-  (3 sessions) for a true — if small — cross-day test.
+  (3 sessions) for a true, if small, cross-day test.
 - Expected headline result is a negative one. That is acceptable and is the point.
+
+---
+
+## 2026 - Post-review correction (six-agent adversarial audit)
+
+Before finalizing, six independent agents reviewed the whole project (numbers, code,
+claims, novelty, plus copy-edit and README). They found real issues; the material ones are
+fixed here, and the negative-result conclusion is unchanged (if anything strengthened).
+
+**1. Temporal-adjacency leakage in the within-session split (the big one).** The original
+`within_session` used a RANDOM window split. Adjacent 5 s windows from one continuous
+recording are autocorrelated, so near-duplicate neighbours landed on both sides of the
+enrol/probe boundary and inflated the within-session number. Independently verified: a
+leak-free time-blocked split (enrol on each subject's earlier windows, probe on the later
+ones) raises Blasco full-fusion within EER 0.014 -> 0.030 and Exam-Stress 0.147 -> 0.234.
+Fix: `within_session(..., split="blocked")` is now the default; `split="random"` is retained
+only for the split-leakage control. All within-session numbers, tables, figures, and prose
+updated to the leak-free values. Same-combination collapse is now ~6.9x (Blasco) and ~1.45x
+(Exam-Stress). The honest reading of the true cross-day dataset is now "the wrist signal was
+never strong even within-session," which is a cleaner negative result than a "collapse."
+
+**2. Label-shuffle control was cited but not implemented.** RESULTS/paper/README cited a
+label-shuffle leakage control with specific chance numbers, but no code produced it. Now
+implemented as `robustness.label_shuffle_control()` (permute subject_id within session, re-run
+within/cross); it is wired into `robustness.main()` and `reproduce.py`, writes to
+`robustness_phase6.json`, and passes (both datasets -> ~0.50). Also added
+`robustness.split_leakage_check()` to quantify the random-vs-blocked inflation in code.
+
+**3. Collapse factor defined per fixed combination.** The old "14x" divided the best-cross
+combo by a different best-within combo. `analysis.fusion_verdict` now reports a same-combination
+collapse (full triple) alongside the cross-combo one; the paper uses the same-combo figure.
+
+**4. Claim corrections.** Removed the false "cardiac degrades most" generalization (true only
+for Blasco ECG; on Exam-Stress PPG degrades LEAST because it never worked within-session).
+Softened the security multipliers to order-of-magnitude and added the caveat that device FARs
+are low-FAR tuned points while ours is the balanced EER, plus a closed-set-vs-open-set note.
+Flagged the fusion "best combo" as a post-hoc best-of-7 selection on ~6 units, and noted the
+full triple can underperform a 2-signal subset on Exam-Stress.
+
+**5. Novelty repositioned.** A contemporaneous benchmark, ECG-biometrics-bench
+(arXiv:2605.01548, verified real this session), already names the within-session "random-split"
+fallacy across seven ECG datasets. Now cited; our contribution is repositioned as the
+complementary multi-signal FUSION slice, not a new methodological insight.
+
+**6. Copy-edit + README.** All em-dashes and en-dashes removed from the paper, RESULTS, and
+README; README rewritten for a lay reader while keeping the numbers and caveats.
+
+Cross-session absolute EERs (0.20-0.34) and the security-bar conclusion (4-5 orders of
+magnitude short of a device unlock) are unchanged: the within-session fix does not touch the
+cross-session protocol.

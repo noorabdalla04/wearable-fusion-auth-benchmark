@@ -154,8 +154,19 @@ def _score_split(enrol: pd.DataFrame, probe: pd.DataFrame, feat_cols: list[str],
 
 
 def within_session(df: pd.DataFrame, combo: tuple[str, ...], seed: int,
-                   test_frac: float = 0.5, model: str = "template") -> EvalResult:
-    """Enrol/probe split WITHIN each session; average EER/AUC across sessions."""
+                   test_frac: float = 0.5, model: str = "template",
+                   split: str = "blocked") -> EvalResult:
+    """Enrol/probe split WITHIN each session; average EER/AUC across sessions.
+
+    split="blocked" (default, LEAK-FREE): order each subject's windows by
+        window_index (time) and enrol on the earlier fraction, probe on the
+        later fraction. Adjacent windows from one continuous recording are
+        autocorrelated; a time-blocked split keeps near-duplicate neighbours
+        on the SAME side of the enrol/probe boundary.
+    split="random": shuffle windows before the 50/50 cut. This LEAKS temporal
+        neighbours across the split and inflates within-session accuracy; kept
+        only to quantify that inflation (see robustness.split_leakage_check).
+    """
     rng = np.random.default_rng(seed)
     feat_cols = _combo_columns(df, combo)
     d = df[_combo_mask(df, combo)]
@@ -165,10 +176,14 @@ def within_session(df: pd.DataFrame, combo: tuple[str, ...], seed: int,
         # disjoint per-subject window split
         enrol_idx, probe_idx = [], []
         for s in ds.subject_id.unique():
-            idx = ds.index[ds.subject_id == s].to_numpy()
-            if len(idx) < 2:
+            sub = ds[ds.subject_id == s]
+            if len(sub) < 2:
                 continue
-            rng.shuffle(idx)
+            if split == "random":
+                idx = sub.index.to_numpy()
+                rng.shuffle(idx)
+            else:  # blocked (time-ordered, leak-free)
+                idx = sub.sort_values("window_index").index.to_numpy()
             cut = max(1, int(len(idx) * (1 - test_frac)))
             enrol_idx += list(idx[:cut]); probe_idx += list(idx[cut:])
         enrol, probe = ds.loc[enrol_idx], ds.loc[probe_idx]
