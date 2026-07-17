@@ -1,8 +1,28 @@
-# wearable-fusion-auth-benchmark
+<div align="center">
 
-**An honest, reproducible benchmark that tests whether combining several wearable body signals can identify you well enough to unlock a device, and shows that it cannot once you are tested on a different day.**
+# Wearable Fusion Auth Benchmark
 
-`License: MIT` · `Python: 3.10+` · `Status: benchmark complete (2 datasets), paper drafted` · `Reproduce: python reproduce.py` · `Raw data: not committed (bring your own)`
+**When does wearable multi-signal fusion stop working?**
+
+An honest, reproducible benchmark testing whether fusing wrist signals (PPG, ECG, GSR, ACC)<br>
+can identify you well enough to unlock a device. It cannot, once you are tested on a different day.
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://www.python.org/)
+[![Reproduce](https://img.shields.io/badge/reproduce-python%20reproduce.py-brightgreen.svg)](reproduce.py)
+[![Paper](https://img.shields.io/badge/paper-PDF-red.svg)](paper/wearable_fusion_auth_paper.pdf)
+[![Datasets](https://img.shields.io/badge/datasets-2%20public-orange.svg)](data/README.md)
+[![Tests](https://img.shields.io/badge/tests-12%20passing-success.svg)](tests/)
+
+[**Results**](#headline-results) · [**Why it matters**](#why-it-matters) · [**Quickstart**](#quickstart--reproduce) · [**Paper (PDF)**](paper/wearable_fusion_auth_paper.pdf) · [**Full numbers**](RESULTS.md) · [**Citation**](#citation)
+
+<br>
+
+<img src="figures/fig1_collapse.png" alt="Within-session accuracy is excellent and then collapses across sessions" width="88%">
+
+<sub><b>Within-session, fused wrist signals identify the wearer almost perfectly (blue). Test on a different activity or day (red) and the accuracy collapses. That gap is the illusion this benchmark measures.</b></sub>
+
+</div>
 
 ---
 
@@ -25,7 +45,6 @@ This project builds a clean, leak-free pipeline, **reaches a comparably strong w
 ## Table of contents
 
 - [Headline results](#headline-results)
-- [The core idea in one picture](#the-core-idea-in-one-picture)
 - [Fusion verdict: does combining signals help?](#fusion-verdict-does-combining-signals-help)
 - [Security-bar accounting](#security-bar-accounting)
 - [Robustness and honesty checks](#robustness-and-honesty-checks)
@@ -54,19 +73,13 @@ Measured on two public datasets. EER (equal error rate) is the error at the poin
 
 Full numbers live in [`RESULTS.md`](RESULTS.md). Figures live in [`figures/`](figures/). Everything regenerates with one command: `python reproduce.py`.
 
-## The core idea in one picture
-
-![Within-session accuracy is excellent and then collapses across sessions]({{artifact:art_fd5c405b-9334-494f-8a32-9013796f9849}})
-
-Within-session, the fused signals identify the wearer almost perfectly. Move the test to a different activity state or a different day, and accuracy falls sharply. The gap between the two bars is the illusion that this project measures.
-
 ## Fusion verdict: does combining signals help?
 
 Yes, a little, but not enough. Fusing signals beats the best single signal cross-session by **+0.06 EER on Blasco** and **+0.04 EER on Exam-Stress**. That edge does not close the cross-session gap: absolute cross-session EER stays at **0.20 to 0.34**.
 
 No single signal survives the move across sessions (every one degrades sharply, see `figures/fig3_per_signal.png`). Notably, the cardiac signal (PPG), the component a heartbeat-based "password" would most rely on, **drops out of the cross-session optimum entirely**. The best cross-session combinations are **PPG+GSR** (Blasco) and **GSR+ACC** (Exam-Stress). PPG's waveform shape does not transfer between sessions, so it stops pulling its weight cross-session even where it helped within-session.
 
-![Per-signal cross-session performance]({{artifact:art_f14625cb-e4af-4872-af62-93f43ed3aa88}})
+<div align="center"><img src="figures/fig3_per_signal.png" alt="Per-signal cross-session performance" width="90%"></div>
 
 ## Security-bar accounting
 
@@ -79,7 +92,7 @@ At the equal-error operating point, the false-accept rate equals the EER. In pla
 
 That is 4 to 5 orders of magnitude short of a real device unlock (see `figures/fig2_security_bar.png`).
 
-![Cross-session performance against the fingerprint and Face ID security bars]({{artifact:art_e20bdd4d-8584-4c95-8841-3d1d7e54111c}})
+<div align="center"><img src="figures/fig2_security_bar.png" alt="Cross-session performance against the fingerprint and Face ID security bars" width="90%"></div>
 
 ## Robustness and honesty checks
 
